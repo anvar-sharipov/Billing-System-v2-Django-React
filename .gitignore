@@ -1,0 +1,50 @@
+# --- Python / Django ---
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.log
+*.pot
+*.py~
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.db-journal
+*.mo
+venv/
+.env/
+
+# Django static/media
+/staticfiles/
+/media/
+/backend/staticfiles/
+/backend/media/
+
+# --- Node / React ---
+/frontend/node_modules/
+/frontend/.env
+/frontend/build/
+/frontend/dist/
+/frontend/.next/
+
+# --- Environment files ---
+.env
+.env.local
+.env.*.local
+
+# --- Docker ---
+/billing_postgres_data/
+/billing_media/
+/billing_static/
+/billing_ssl/
+*.pid
+
+# --- VSCode / Editors ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- System files ---
+.DS_Store
+Thumbs.db

@@ -1,0 +1,73 @@
+version: "3.9"
+
+services:
+  postgres_billing:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - billing_postgres_data:/var/lib/postgresql/data
+      - ./init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+    networks:
+      - billing_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    networks:
+      - billing_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  django_backend:
+    build: ./backend
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      postgres_billing:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    networks:
+      - billing_net
+    volumes:
+      - billing_media:/app/media
+      - billing_static:/app/staticfiles
+
+  react_frontend:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"      # HTTP
+      - "443:443"    # HTTPS
+    networks:
+      - billing_net
+    depends_on:
+      - django_backend
+    volumes:
+      - billing_ssl:/etc/nginx/ssl        # Volume для хранения SSL
+      - billing_static:/app/staticfiles:ro
+      - billing_media:/app/media:ro
+
+volumes:
+  billing_postgres_data:
+  billing_media:
+  billing_static:
+  billing_ssl:  # Добавлен volume для SSL
+
+networks:
+  billing_net:
