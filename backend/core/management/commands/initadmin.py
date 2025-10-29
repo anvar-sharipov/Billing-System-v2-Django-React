@@ -3,8 +3,22 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 from django.db import IntegrityError
 import os
+from core.models import Etrap
 
 User = get_user_model()
+
+ETRAPS = {
+    "Dashoguz": "322",
+    "Akdepe": "344",
+    "Boldumsaz": "346",
+    "Gorogly": "340",
+    "Gubadag": "345",
+    "Garashsyzlyk": "343",
+    "Koneurgench": "347",
+    "Turkmenbashy": "349",
+    "Shabat": "348",
+    "Ruhubelent": "342",
+}
 
 
 class Command(BaseCommand):
@@ -37,15 +51,21 @@ class Command(BaseCommand):
 
         # Создание групп
         groups_config = {
-            'Administrators': {
+            'admin': {
                 'description': 'Full system access',
                 'permissions': []  # Все права будут назначены вручную
             },
-            'Dashoguz_kassa': {
-                'description': 'Manage users and billing',
+            'AMTC_access': {
+                'description': 'AMTS code access',
                 'permissions': []
             },
         }
+        # Добавляем группы по всем этрапам
+        for etrap_name in ETRAPS.keys():
+            groups_config[etrap_name] = {
+                'description': f'{etrap_name} operators',
+                'permissions': []
+            }
 
         for group_name, config in groups_config.items():
             try:
@@ -76,6 +96,22 @@ class Command(BaseCommand):
                 self.style.ERROR(f'✗ Error adding admin to group: {e}')
             )
 
-        self.stdout.write(
-            self.style.SUCCESS('\n=== Setup completed successfully ===')
-        )
+        
+        # --- Etraps ---
+        for etrap_name, code in ETRAPS.items():
+            try:
+                etrap, created = Etrap.objects.get_or_create(
+                    code=code,
+                    defaults={'etrap': etrap_name, 'is_active': True}
+                )
+                if not created:
+                    # Если этрап уже есть — активируем
+                    etrap.is_active = True
+                    etrap.save()
+                    self.stdout.write(self.style.WARNING(f'⚠ Etrap "{etrap_name}" updated to active'))
+                else:
+                    self.stdout.write(self.style.SUCCESS(f'✓ Etrap "{etrap_name}" created'))
+            except Exception as e:
+                self.stdout.write(self.style.ERROR(f'✗ Error creating etrap {etrap_name}: {e}'))
+
+        self.stdout.write(self.style.SUCCESS('\n=== Setup completed successfully ==='))

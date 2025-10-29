@@ -1,13 +1,24 @@
 import axios from "axios";
-import { jwtDecode } from "jwt-decode"; // ✅ Правильно для версии 4.0.0
+import { jwtDecode } from "jwt-decode";
 
-const BASE_URL = "http://127.0.0.1:8000/";
+const rawEnvUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+
+const normalizeToApi = (u) => {
+  if (!u) return "http://127.0.0.1:8000/api/";
+  let url = String(u).trim();
+  if (url.endsWith("/api/")) return url;
+  if (url.endsWith("/api")) return url + "/";
+  if (url.endsWith("/")) return url + "api/";
+  return url + "/api/";
+};
+
+const BASE_URL = normalizeToApi(rawEnvUrl);
 
 const myAxios = axios.create({
   baseURL: BASE_URL,
 });
 
-// Функция обновления access токена
+// Обновление access токена
 const refreshToken = async () => {
   const refresh = localStorage.getItem("refresh");
   if (!refresh) throw new Error("Нет refresh токена");
@@ -18,39 +29,31 @@ const refreshToken = async () => {
   return access;
 };
 
-// Интерцептор для добавления токена к запросам
-myAxios.interceptors.request.use(
-  async (config) => {
-    let access = localStorage.getItem("access");
-    if (access) {
-      const decoded = jwtDecode(access); // ✅ Используем jwtDecode
-      const now = Date.now() / 1000;
-
-      if (decoded.exp < now) {
-        try {
-          access = await refreshToken();
-        } catch (err) {
-          console.error("Не удалось обновить токен", err);
-          localStorage.removeItem("access");
-          localStorage.removeItem("refresh");
-          window.location.href = "/login";
-          throw err;
-        }
+// Интерцептор запроса
+myAxios.interceptors.request.use(async (config) => {
+  let access = localStorage.getItem("access");
+  if (access) {
+    const decoded = jwtDecode(access);
+    const now = Date.now() / 1000;
+    if (decoded.exp < now) {
+      try {
+        access = await refreshToken();
+      } catch (err) {
+        console.error("Не удалось обновить токен", err);
+        localStorage.removeItem("access");
+        localStorage.removeItem("refresh");
       }
-
-      config.headers["Authorization"] = `Bearer ${access}`;
     }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+    config.headers["Authorization"] = `Bearer ${access}`;
+  }
+  return config;
+}, (error) => Promise.reject(error));
 
-// Интерцептор для обработки 401
+// Интерцептор ответа
 myAxios.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-
     if (error.response && error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
@@ -60,10 +63,9 @@ myAxios.interceptors.response.use(
       } catch (err) {
         localStorage.removeItem("access");
         localStorage.removeItem("refresh");
-        window.location.href = "/login";
+        // НЕ ДЕЛАЕМ window.location.href здесь
       }
     }
-
     return Promise.reject(error);
   }
 );

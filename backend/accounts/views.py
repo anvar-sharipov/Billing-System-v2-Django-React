@@ -1,4 +1,4 @@
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import User
@@ -8,6 +8,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.models import Group
 from rest_framework.parsers import MultiPartParser, FormParser
+from django.db import IntegrityError
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -23,13 +24,19 @@ class RegisterView(generics.CreateAPIView):
         groups_ids = request.data.getlist("groups")  # получаем список групп
 
         # создаем пользователя
-        user = User.objects.create_user(
-            username=username,
-            password=password,
-            first_name=first_name,
-            last_name=last_name,
-            image=image
-        )
+        try:
+            user = User.objects.create_user(
+                username=username,
+                password=password,
+                first_name=first_name,
+                last_name=last_name,
+                image=image
+            )
+        except IntegrityError:
+            return Response(
+                {"message": "Пользователь с таким именем уже существует"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         # добавляем пользователя в группы
         if groups_ids:
@@ -83,3 +90,11 @@ def get_users(request):
     users = User.objects.all()
     serializer = UserSerializer(users, many=True)
     return Response(serializer.data)
+
+
+class MeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data)

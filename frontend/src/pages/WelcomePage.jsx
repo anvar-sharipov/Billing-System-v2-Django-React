@@ -9,7 +9,7 @@ export default function WelcomePage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-100">
       <div className="p-6 bg-white rounded-lg shadow-md text-blue-600">
-        Tailwind работает ✅
+        Smart Billing ✅
       </div>
     </div>
   );

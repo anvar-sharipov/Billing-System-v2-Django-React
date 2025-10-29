@@ -1,8 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { motion } from "framer-motion";
 import { User, Lock, LogIn, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import myAxios from "../../services/myAxios";
+import { useNotifications } from "../../components/Notifications";
+import { useNavigate } from "react-router-dom";
+import { ROUTES } from "../../routes";
+import { AuthContext } from "./AuthContext";
 
 export default function Login() {
   const { t } = useTranslation();
@@ -11,28 +15,33 @@ export default function Login() {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { notificationSuccess, notificationError } = useNotifications();
+  const navigate = useNavigate();
 
   useEffect(() => {
     document.title = `${t("Login")} - Smart Billing`;
-  }, [t])
+  }, [t]);
+
+  const { login } = useContext(AuthContext);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
     setIsLoading(true);
 
     try {
       const response = await myAxios.post("accounts/login/", { username, password });
-      const { access, refresh } = response.data;
 
-      localStorage.setItem("access", access);
-      localStorage.setItem("refresh", refresh);
+      if (response.status === 200 && response.data.access) {
+        const { access, refresh } = response.data;
 
-      alert("✅ Вход успешен!");
-      window.location.href = "/";
+        await login(access, refresh); // <-- обновляем контекст и user
+        notificationSuccess(t("Success login"), t("success"));
+        navigate(ROUTES.WELCOME_PAGE);
+      } else {
+        notificationError(t("Error login or password"), t("error"));
+      }
     } catch (err) {
-      console.error(err);
-      setError("❌ Неверное имя пользователя или пароль");
+      notificationError(t("Error login or password"), t("error"));
     } finally {
       setIsLoading(false);
     }
@@ -99,7 +108,11 @@ export default function Login() {
                 placeholder={t("Enter your password")}
               />
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              >
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
@@ -107,7 +120,11 @@ export default function Login() {
 
           {/* Error */}
           {error && (
-            <motion.div initial={{ opacity: 0, y: -10, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} className="mb-5 p-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 rounded-lg flex items-start gap-3">
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              className="mb-5 p-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 rounded-lg flex items-start gap-3"
+            >
               <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="font-semibold text-red-700 dark:text-red-400 text-sm">Ошибка входа</p>

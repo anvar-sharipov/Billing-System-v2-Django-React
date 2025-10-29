@@ -79,17 +79,28 @@ TEMPLATES = [
 #     }
 # }
 
-
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": config("POSTGRES_DB"),
         "USER": config("POSTGRES_USER"),
         "PASSWORD": config("POSTGRES_PASSWORD"),
-        "HOST": config("POSTGRES_HOST"),
+        "HOST": "127.0.0.1",
         "PORT": config("POSTGRES_PORT"),
     }
 }
+
+
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": config("POSTGRES_DB"),
+#         "USER": config("POSTGRES_USER"),
+#         "PASSWORD": config("POSTGRES_PASSWORD"),
+#         "HOST": config("POSTGRES_HOST"),
+#         "PORT": config("POSTGRES_PORT"),
+#     }
+# }
 
 
 # Password validation
@@ -187,8 +198,14 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Замените на ваш IP
 CSRF_TRUSTED_ORIGINS = [
+    'https://192.168.25.74',
     'https://192.168.0.2',
     'https://localhost',
+    'http://192.168.25.74',
     'http://192.168.0.2',
     'http://localhost',
 ]
+\
+    
+DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600  # 100MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 104857600  # 100MB
