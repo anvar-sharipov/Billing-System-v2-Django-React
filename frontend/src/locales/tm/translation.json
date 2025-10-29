@@ -174,5 +174,13 @@
   "etrap": "Etrap",
   "resetFilters": "Filterleri arassala",
   "account": "Hasap №",
-  "enterAccount": "Hasap № giriziň"
+  "enterAccount": "Hasap № giriziň",
+  "searchResults": "Gözleg netijeleri",
+  "contractsBalance": "Şertnamalaryň balansy",
+  "fullName": "Doly ady",
+  "address": "Salgysy",
+  "columns": "Sütünler",
+  "number": "Nomer",
+  "activated": "Aktiwirlendi",
+  "deactivated": "Inaktiwirlendi"
 }

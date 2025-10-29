@@ -345,7 +345,9 @@ def create_abonent(request):
                     # ic(patronymic)
                     
                 
-                UserDogowor.objects.create(user=user, dogowor=dogowor, balance_type='telefon', activate_at=datetime.now())  
+                dogowor_obj = UserDogowor.objects.create(user=user, dogowor=dogowor, balance_type='telefon', activate_at=datetime.now())
+                DogoworBalance.objects.create(dogowor=dogowor_obj)
+                
                 return Response({
                     "success": True,
                     "message": "Abonent created successfully"

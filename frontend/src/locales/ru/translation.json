@@ -171,7 +171,17 @@
   "etrap": "Этрап",
   "resetFilters": "Сбросить фильтры",
   "account": "Счёт №",
-  "enterAccount": "Введите № счёта"
+  "enterAccount": "Введите № счёта",
+  "Login3": "Login",
+  "searchResults": "Результаты поиска",
+  "contractsBalance": "Баланс контрактов",
+  "fullName": "Полное имя",
+  "address": "Адрес",
+  "columns": "Колонки",
+  "number": "Номер",
+  "activated": "Активирован",
+  "deactivated": "Деактивирован"
+
 
 
 }

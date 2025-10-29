@@ -60,11 +60,23 @@ class UserDogowor(models.Model):
 
     def __str__(self):
         return f"{self.user.number} — {self.dogowor} ({self.get_balance_type_display()})"
+    
+    
+class DogoworLogin(models.Model):
+    dogowor = models.OneToOneField(UserDogowor, verbose_name="Договор", on_delete=models.CASCADE, related_name="login")
+    login = models.CharField(max_length=500, verbose_name='Логин')
+
+    class Meta:
+        verbose_name = "Логин"
+        verbose_name_plural = "Логины"
+
+    def __str__(self):
+        return f"{self.dogowor.dogowor}: {self.login}"
 
 
 class DogoworBalance(models.Model):
-    dogowor = models.OneToOneField(UserDogowor, verbose_name="Договор", on_delete=models.PROTECT, related_name="balance")
-    amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    dogowor = models.OneToOneField(UserDogowor, verbose_name="Договор", on_delete=models.CASCADE, related_name="balance")
+    amount = models.DecimalField(max_digits=12, decimal_places=4, default=Decimal('0.0000'))
 
     class Meta:
         verbose_name = "Баланс"
@@ -88,9 +100,9 @@ class AccrualCategory(models.Model):
 
 
 class DogoworAccrual(models.Model):
-    dogowor = models.ForeignKey(UserDogowor, verbose_name="Договор", on_delete=models.PROTECT, related_name="accruals")
+    dogowor = models.ForeignKey(UserDogowor, verbose_name="Договор", on_delete=models.CASCADE, related_name="accruals")
     amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), verbose_name="Сумма начисления")
-    category = models.ForeignKey(AccrualCategory, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Категория")
+    category = models.ForeignKey(AccrualCategory, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Категория")
     description = models.TextField(blank=True, verbose_name="Комментарий / описание")
     year = models.CharField(max_length=4, verbose_name="Год начисления")
     month = models.CharField(max_length=2, verbose_name="Месяц начисления")
@@ -107,8 +119,8 @@ class DogoworAccrual(models.Model):
 
 
 class DogoworPayment(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name="Добавил", on_delete=models.PROTECT, null=True, blank=True, related_name="dogowor_payments")
-    dogowor = models.ForeignKey(UserDogowor, verbose_name="Договор", on_delete=models.PROTECT, related_name="payments")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name="Добавил", on_delete=models.CASCADE, null=True, blank=True, related_name="dogowor_payments")
+    dogowor = models.ForeignKey(UserDogowor, verbose_name="Договор", on_delete=models.CASCADE, related_name="payments")
     amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"), verbose_name="Сумма платежа")
     payment_method = models.CharField(max_length=100, blank=True, verbose_name="Способ оплаты (касса, банк, онлайн и т.д.)")
     description = models.TextField(blank=True, verbose_name="Комментарий / описание")
@@ -136,7 +148,7 @@ class UserActionHistory(models.Model):
         ("other", "Другое"),
     ]
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name="Пользователь", on_delete=models.PROTECT, null=True, blank=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name="Пользователь", on_delete=models.CASCADE, null=True, blank=True)
     action_type = models.CharField(max_length=50, choices=ACTION_TYPES, verbose_name="Тип действия")
     model_name = models.CharField(max_length=100, blank=True, verbose_name="Модель / объект")
     object_id = models.CharField(max_length=100, blank=True, verbose_name="ID объекта")
