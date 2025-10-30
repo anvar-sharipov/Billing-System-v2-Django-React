@@ -19,6 +19,7 @@ import { NotificationProvider } from "./components/Notifications";
 import ProtectedRoute from "./pages/Auth/ProtectedRoute";
 import AdminRoute from "./pages/Auth/AdminRoute";
 import { UserProvider } from "./pages/Auth/UserContext";
+import AddTestData from "./pages/Admin/addTestData/AddTestData";
 
 function App() {
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
@@ -60,9 +61,14 @@ function App() {
                   <Route path={ROUTES.CHAT} element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
                   <Route path={ROUTES.USERS} element={<ProtectedRoute><Users /></ProtectedRoute>} />
                   <Route path={ROUTES.ABONENT_FORM} element={<ProtectedRoute><AbonentForm /></ProtectedRoute>} />
-                  <Route path={ROUTES.ADMIN} element={<ProtectedRoute><Admin /></ProtectedRoute>} />
-                  <Route path={ROUTES.ADD_USERS_FROM_BILLING} element={<ProtectedRoute><AddUsersFromBilling /></ProtectedRoute>} />
+                
                   <Route path="test2" element={<ProtectedRoute><Test2 /></ProtectedRoute>} />
+
+                  {/* admin */}
+                  <Route path={ROUTES.ADMIN} element={<AdminRoute><ProtectedRoute><Admin /></ProtectedRoute></AdminRoute>} />
+                  <Route path={ROUTES.ADD_USERS_FROM_BILLING} element={<AdminRoute><ProtectedRoute><AddUsersFromBilling /></ProtectedRoute></AdminRoute>} />
+                  <Route path={ROUTES.ADD_TEST_DATA} element={<AdminRoute><ProtectedRoute><AddTestData /></ProtectedRoute></AdminRoute>} />
+
                 </Route>
               </Routes>
             </Router>

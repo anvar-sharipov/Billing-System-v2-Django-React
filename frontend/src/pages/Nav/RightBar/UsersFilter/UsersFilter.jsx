@@ -73,6 +73,7 @@ const UsersFilter = ({ onSearch, onFilter, etraps }) => {
       patronymic: "",
       phone: "",
       dogowor: "",
+      address: "",
       // Фильтры
       is_active: "",
       is_enterprises: "",
@@ -117,6 +118,9 @@ const UsersFilter = ({ onSearch, onFilter, etraps }) => {
           params.append(key, val);
         }
       });
+
+      // Сбрасываем пагинацию на первую страницу при новом поиске/фильтре
+      params.set('page', '1');
 
       // Обновляем URL (но без перезагрузки страницы)
       navigate(`?${params.toString()}`, { replace: true });
@@ -173,10 +177,20 @@ const UsersFilter = ({ onSearch, onFilter, etraps }) => {
         params.delete("name");
         params.delete("patronymic");
         params.delete("phone");
+      } else if (value === "address") {
+        setFieldValue("surname", "");
+        setFieldValue("name", "");
+        setFieldValue("patronymic", "");
+        setFieldValue("phone", "");
+        params.delete("surname");
+        params.delete("name");
+        params.delete("patronymic");
+        params.delete("phone");
       }
     }
 
-    // Обновляем URL без перезагрузки
+    // Сбрасываем страницу на 1 при изменении фильтра и обновляем URL без перезагрузки
+    params.set('page', '1');
     window.history.replaceState({}, "", `${window.location.pathname}?${params.toString()}`);
   };
 
@@ -228,6 +242,9 @@ const UsersFilter = ({ onSearch, onFilter, etraps }) => {
             </option>
             <option value="dogowor" className="bg-gray-800 dark:bg-gray-700 text-white dark:text-gray-100">
               {t("contract")}
+            </option>
+            <option value="address" className="bg-gray-800 dark:bg-gray-700 text-white dark:text-gray-100">
+              {t("address")}
             </option>
           </select>
           <ChevronDown size={16} className="absolute top-1/2 right-2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
@@ -311,6 +328,16 @@ const UsersFilter = ({ onSearch, onFilter, etraps }) => {
           value={values.dogowor}
           onChange={(e) => setFieldValue("dogowor", e.target.value)}
           hidden={values.searchType !== "dogowor"}
+        />
+        {/* СЛОТ 5: Address */}
+        <SearchInput
+          field="address"
+          placeholder={t("enterAddress")}
+          icon={MapPin}
+          label={t("Address")}
+          value={values.address}
+          onChange={(e) => setFieldValue("address", e.target.value)}
+          hidden={values.searchType !== "address"}
         />
       </div>
 

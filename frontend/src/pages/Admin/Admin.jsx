@@ -26,11 +26,11 @@ const Admin = () => {
     },
     {
       id: 2,
-      name: "Системные настройки",
+      name: "Добавление тестовых данных",
       icon: Settings,
       color: "emerald",
-      to: "/admin/settings",
-      description: "Общие настройки системы",
+      to: ROUTES.ADD_TEST_DATA,
+      description: "Добавление тестовых данных",
     },
     {
       id: 3,

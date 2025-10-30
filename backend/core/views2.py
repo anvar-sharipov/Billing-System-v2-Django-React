@@ -18,6 +18,7 @@ from rest_framework.response import Response
 from django.core.exceptions import ValidationError
 import re
 from .models import *
+from django.core.paginator import Paginator, EmptyPage
 
 
 
@@ -109,8 +110,10 @@ def checkUniqueDogowor(request):
         
         
 
+
 @api_view(['GET'])
 def get_filtered_users(request):
+    # Получаем параметры фильтрации
     searchType = request.GET.get('searchType', '')
     surname = request.GET.get('surname', '')
     name = request.GET.get('name', '')
@@ -122,9 +125,22 @@ def get_filtered_users(request):
     hb_type = request.GET.get('hb_type', '')
     phone = request.GET.get('phone', '')
     dogowor = request.GET.get('dogowor', '')
+    address = request.GET.get('address', '')
+    ic(address)
     
     # UserTable.objects.all().delete()
     # UserDogowor.objects.all().delete()
+    
+    # Параметры пагинации
+    page = request.GET.get('page', 1)
+    page_size = request.GET.get('page_size', 10)  # По умолчанию 20 записей на странице
+    
+    try:
+        page = int(page)
+        page_size = int(page_size)
+    except (ValueError, TypeError):
+        page = 1
+        page_size = 20
 
     qs = UserTable.objects.all()
 
@@ -149,16 +165,24 @@ def get_filtered_users(request):
         if patronymic:
             qs = qs.filter(patronymic__icontains=patronymic)
         if phone:
-            qs = qs.filter(mobile_number__icontains=phone)
+            qs = qs.filter(
+                Q(number__icontains=phone) |
+                Q(mobile_number__icontains=phone)
+            )
         if dogowor:
-            # Поиск по связанным договорам
             qs = qs.filter(dogowors__dogowor__icontains=dogowor)
     elif searchType == 'phone':
         if phone:
-            qs = qs.filter(mobile_number__icontains=phone)
+            qs = qs.filter(
+                Q(number__icontains=phone) |
+                Q(mobile_number__icontains=phone)
+            )
     elif searchType == 'dogowor':
         if dogowor:
             qs = qs.filter(dogowors__dogowor__icontains=dogowor)
+    elif searchType == 'address':
+        if address:
+            qs = qs.filter(address__icontains=address)
 
     # Фильтры для предприятий
     if account:
@@ -166,9 +190,22 @@ def get_filtered_users(request):
     if hb_type:
         qs = qs.filter(hb_type=hb_type)
 
+    # Применяем distinct() и подсчитываем общее количество записей
+    qs = qs.distinct()
+    total_count = qs.count()
+
+    # Создаем пагинатор
+    paginator = Paginator(qs, page_size)
+    
+    try:
+        paginated_qs = paginator.page(page)
+    except EmptyPage:
+        # Если страница пустая, возвращаем последнюю страницу
+        paginated_qs = paginator.page(paginator.num_pages)
+
     # Сериализация
     results = []
-    for user in qs.distinct():
+    for user in paginated_qs:
         dogowors_list = []
         for d in user.dogowors.all():
             dogowors_list.append({
@@ -195,8 +232,17 @@ def get_filtered_users(request):
             "address": user.address,
             "dogowors": dogowors_list,
         })
-    
-    ic(results)
 
-    return JsonResponse({"results": results})
+    # Возвращаем ответ с пагинацией
+    return JsonResponse({
+        "results": results,
+        "pagination": {
+            "current_page": page,
+            "page_size": page_size,
+            "total_count": total_count,
+            "total_pages": paginator.num_pages,
+            "has_next": paginated_qs.has_next(),
+            "has_previous": paginated_qs.has_previous(),
+        }
+    })
 

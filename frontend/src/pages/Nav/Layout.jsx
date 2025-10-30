@@ -22,7 +22,7 @@ export default function Layout({ theme, toggleTheme }) {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="flex-1 flex flex-col ml-64 mr-64 transition-colors duration-300 bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm"
+        className="flex-1 flex flex-col ml-64 mr-64 transition-colors duration-300 bg-amber-100 dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm"
       >
         {/* Header */}
         <Header theme={theme} toggleTheme={toggleTheme} />

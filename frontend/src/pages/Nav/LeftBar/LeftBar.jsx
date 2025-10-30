@@ -21,7 +21,7 @@ export default function LeftBar() {
       className="fixed left-0 top-0 h-screen w-64 bg-gradient-to-b from-blue-700/90 to-indigo-800/90 
                  dark:from-gray-800 dark:to-gray-900 text-white p-6 flex flex-col shadow-2xl backdrop-blur-lg z-20"
     >
-      <h1 className="text-xl font-bold tracking-wide mb-8 text-center">MyPanel</h1>
+      {/* <h1 className="text-xl font-bold tracking-wide mb-8 text-center">MyPanel</h1> */}
 
       <ul className="flex flex-col gap-3 flex-1">
         {links.map((link) => (

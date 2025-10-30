@@ -30,7 +30,6 @@ const SaveButton = ({ loadingSave, setLoadingSave, hasDuplicate, hasDuplicateDog
       return;
     }
 
-
     const touchedFields = {};
     allFields.forEach((field) => {
       touchedFields[field] = true;
@@ -106,11 +105,11 @@ const AbonentForm = () => {
   // Валидационная схема внутри компонента
   const validationSchema = Yup.object({
     number: Yup.string().required(t("Number is required")),
-  //   .test("unique-abonent", t("Abonent with this number already exists"), function (value) {
-  //   console.log("hasDuplicate", hasDuplicate);
-    
-  //   return !hasDuplicate;
-  // }),
+    //   .test("unique-abonent", t("Abonent with this number already exists"), function (value) {
+    //   console.log("hasDuplicate", hasDuplicate);
+
+    //   return !hasDuplicate;
+    // }),
 
     etrap: Yup.string().required(t("Etrap is required")),
     dogowor: Yup.string()
@@ -173,7 +172,7 @@ const AbonentForm = () => {
 
   return (
     <div className="p-2">
-      <div className="bg-gray-200 dark:bg-gray-900 p-4 rounded-xl shadow-md">
+      <div className="bg-amber-100 dark:bg-gray-900 p-4 rounded-xl shadow-md">
         <Formik
           initialValues={{
             number: "",
@@ -188,6 +187,7 @@ const AbonentForm = () => {
             hb_type: "",
             is_active: false,
             dogowor: "",
+            comment: "",
           }}
           validationSchema={validationSchema}
           onSubmit={async (values, { resetForm, setSubmitting }) => {
@@ -560,6 +560,18 @@ const AbonentForm = () => {
                       </motion.div>
                     )}
                   </AnimatePresence>
+
+                  {/* Comment Field */}
+                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="space-y-4">
+                    <div className="grid grid-cols-1 gap-4">
+                      <div className="flex items-start gap-4">
+                        <label className={`${labelClass} mt-3`}>{t("Comment")}</label>
+                        <div className="flex-1">
+                          <Field as="textarea" name="comment" placeholder={t("Enter comment")} rows={4} className={`${formClass} resize-vertical min-h-[100px]`} />
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
                 </Form>
               </>
             );

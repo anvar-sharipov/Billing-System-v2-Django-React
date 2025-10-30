@@ -157,6 +157,7 @@
   "contractNumber": "Dogowor belgisi",
   "active": "Aktiw",
   "inactive": "Aktiw däl",
+  "Inactive": "Aktiw däl",
   "selectStatus": "Statusy saýlaň",
   "status": "Statusy",
   "enterprises": "Kärhanalar",
@@ -182,5 +183,15 @@
   "columns": "Sütünler",
   "number": "Nomer",
   "activated": "Aktiwirlendi",
-  "deactivated": "Inaktiwirlendi"
+  "deactivated": "Inaktiwirlendi",
+  "searchHint": "Gözleg parametrlerini üýtgetmegi synanyşyň",
+  "noResults": "Hiç hili netije ýok",
+  "Showing": "Görkezilýär",
+  "Per page": "Sahypa başyna",
+  "Next": "Indiki",
+  "Prev": "Öňki",
+  "of": "из",
+  "Show": "Görkez",
+  "Comment": "Kommentariýa",
+  "Enter comment": "Kommentariýa ýazyň"
 }

@@ -49,9 +49,9 @@ class DogoworPaymentInline(admin.TabularInline):
 # ---------- UserDogowor ----------
 @admin.register(UserDogowor)
 class UserDogoworAdmin(admin.ModelAdmin):
-    list_display = ('dogowor', 'user', 'balance_type')
+    list_display = ('dogowor', 'user', 'balance_type', "comment")
     list_filter = ('balance_type',)
-    search_fields = ('dogowor', 'user__number', 'user__name')
+    search_fields = ('dogowor', 'user__number', 'user__name', "comment")
     inlines = [DogoworBalanceInline, DogoworAccrualInline, DogoworPaymentInline]
     ordering = ('dogowor',)
 

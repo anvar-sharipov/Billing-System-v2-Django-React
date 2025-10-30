@@ -1,6 +1,7 @@
 from django.db import models
 from decimal import Decimal
 from django.conf import settings
+from django.db.models import Q
 
 
 
@@ -56,6 +57,7 @@ class UserDogowor(models.Model):
     balance_type = models.CharField(max_length=50, choices=BalanceType.choices, verbose_name="Тип услуги")
     activate_at = models.DateTimeField(verbose_name="Дата Подключения", null=True, blank=True)
     deactivate_at = models.DateTimeField(verbose_name="Дата Отключения", null=True, blank=True)
+    comment = models.TextField(blank=True, verbose_name="Описание действия")
     
 
     def __str__(self):

@@ -296,7 +296,10 @@ def create_abonent(request):
         address = data.get('address')
         mobile_number = data.get('mobile_number')
         is_active = data.get('is_active')
+        comment = data.get('comment')
         
+        
+        # ic(comment)
         # ic(name)
         # ic(is_enterprises)
         # ic(address)
@@ -316,6 +319,8 @@ def create_abonent(request):
                 if is_enterprises:
                     account = data.get('account')
                     hb_type = data.get('hb_type')
+                    ic(account)
+                    ic(hb_type)
                     user = UserTable.objects.create(
                         number=number,
                         etrap=etrap_obj,
@@ -323,7 +328,9 @@ def create_abonent(request):
                         is_enterprises=True,
                         address=address,
                         mobile_number=mobile_number,
-                        is_active=is_active
+                        is_active=is_active,
+                        account=account,
+                        hb_type=hb_type,
                     )
                     # ic(account)
                     # ic(hb_type)
@@ -339,15 +346,16 @@ def create_abonent(request):
                         is_enterprises=False,
                         address=address,
                         mobile_number=mobile_number,
-                        is_active=is_active
+                        is_active=is_active,
                     )
                     # ic(surname)
                     # ic(patronymic)
                     
                 
-                dogowor_obj = UserDogowor.objects.create(user=user, dogowor=dogowor, balance_type='telefon', activate_at=datetime.now())
+                dogowor_obj = UserDogowor.objects.create(user=user, dogowor=dogowor, balance_type='telefon', activate_at=datetime.now(), comment=comment)
                 DogoworBalance.objects.create(dogowor=dogowor_obj)
-                
+               
+                1/0
                 return Response({
                     "success": True,
                     "message": "Abonent created successfully"
