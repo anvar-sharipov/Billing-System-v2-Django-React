@@ -55,7 +55,7 @@ const Users = () => {
       setLoading(true);
       try {
         const res = await myAxios.get(`core/get-filtered-users/?${params.toString()}`);
-        console.log("API Response:", res.data.results);
+        // console.log("API Response:", res.data.results);
         setUsers(res.data.results || []);
         // read pagination info if backend provided it
         if (res.data.pagination) {
@@ -93,33 +93,28 @@ const Users = () => {
     params.set("page", "1");
     navigate(`?${params.toString()}`);
   };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900/50">
       <div className="px-4 py-8">
-        {/* container mx-auto px-4 py-8 */}
         <div>
           {/* className="max-w-7xl mx-auto" */}
           {/* Шапка страницы */}
-          <UsersHead 
-            selectedRows={selectedRows}
-            totalRows={users.length}
-            etraps={etraps}
-          />
+          <UsersHead selectedRows={selectedRows} totalRows={users.length} etraps={etraps} />
 
+          {/* Таблица пользователей */}
           <div className="bg-gradient-to-br from-white/10 to-white/5 dark:from-gray-800/50 dark:to-gray-700/30 backdrop-blur-lg rounded-2xl p-6 shadow-2xl border border-white/10 dark:border-gray-600/30 mt-6">
-            <UsersTable 
-              users={users} 
+            <UsersTable
+              users={users}
               loading={loading}
-          selectedRows={selectedRows}
-          setSelectedRows={setSelectedRows}
-          // pagination props
-          currentPage={currentPage}
-          pageSize={pageSize}
-          totalCount={totalCount}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-          onPageSizeChange={handlePageSizeChange}
+              selectedRows={selectedRows}
+              setSelectedRows={setSelectedRows}
+              // pagination props
+              currentPage={currentPage}
+              pageSize={pageSize}
+              totalCount={totalCount}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
             />
           </div>
         </div>

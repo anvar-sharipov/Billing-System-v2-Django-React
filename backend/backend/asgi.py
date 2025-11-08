@@ -11,18 +11,18 @@ from channels.auth import AuthMiddlewareStack
 django_application = get_asgi_application()
 
 # Now it's safe to import code that depends on Django apps
-from chat.middleware import JwtAuthMiddleware
-from chat.routing import websocket_urlpatterns
-from chat.consumers import ChatConsumer
+# from chat.middleware import JwtAuthMiddleware
+# from chat.routing import websocket_urlpatterns
+# from chat.consumers import ChatConsumer
 
-application = ProtocolTypeRouter({
-    "http": django_application,
-    "websocket": JwtAuthMiddleware(
-        AuthMiddlewareStack(
-            URLRouter(websocket_urlpatterns)
-        )
-    ),
-})
+# application = ProtocolTypeRouter({
+#     "http": django_application,
+#     "websocket": JwtAuthMiddleware(
+#         AuthMiddlewareStack(
+#             URLRouter(websocket_urlpatterns)
+#         )
+#     ),
+# })
 
 
 

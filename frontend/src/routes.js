@@ -2,7 +2,7 @@ export const ROUTES = {
   WELCOME_PAGE: "/",
   LOGIN: "login",
   REGISTER: "/register",
-  CHAT: "/chat",
+  // CHAT: "/chat",
   USERS: "/users",
   ABONENT_FORM: "/abonent-form",
 

@@ -19,6 +19,10 @@ from django.core.exceptions import ValidationError
 import re
 from .models import *
 from django.core.paginator import Paginator, EmptyPage
+from django.shortcuts import get_object_or_404
+from .serializers import UserTableSerializer, UserDogoworSerializer
+from django.utils.timezone import make_aware
+from .views import get_group_list
 
 
 
@@ -28,43 +32,65 @@ def checkActiveOrNot(request):
         # Получаем параметры из query string
         number = request.GET.get('number')
         etrap = request.GET.get('etrap')
-        is_active = request.GET.get('is_active')
+        
+        activate_at = request.GET.get('activate_at')
+        deactivate_at = request.GET.get('deactivate_at')
+        
+        activate_at_datetime = None
+        if activate_at:
+            activate_at_datetime = datetime.fromisoformat(activate_at)
+         
+        deactivate_at_datetime = None
+        if deactivate_at:
+            deactivate_at_datetime = datetime.fromisoformat(deactivate_at)
+            
+        
+        ic(activate_at_datetime)
+        ic(deactivate_at_datetime)
+        
+        
+        user_id = request.GET.get('id')
 
-        ic("Received parameters:", number, etrap, is_active)
+        ic("Received parameters:", number, etrap)
         
         # Валидация обязательных параметров
         if not number:
             return Response({
                 "success": False,
-                "error": "Number parameter is required"
             }, status=400)
         
         if not etrap:
             return Response({
                 "success": False, 
-                "error": "Etrap parameter is required"
             }, status=400)
         
-        # Преобразование is_active в boolean
-        is_active_bool = is_active and is_active.lower() in ['true', '1', 'yes']
+   
         
-        # Здесь ваша бизнес-логика проверки
-        # Например:
-        # from .models import Abonent
-        # abonent_exists = Abonent.objects.filter(
-        #     number=number,
-        #     etrap_id=etrap,
-        #     is_active=is_active_bool
-        # ).exists()
-        
-        # Заглушка для примера
-        abonent_exists = UserTable.objects.filter(number=number, etrap_id=etrap, is_active=is_active_bool).exists()
-        
-        return Response({
-            "success": True,
-            "exists": abonent_exists,
-            "message": "Check completed successfully"
-        })
+        if activate_at_datetime and not deactivate_at_datetime: 
+            # Ищем пользователей с таким номером и этапом, у которых есть активные договоры
+            query = UserTable.objects.filter(
+                number=number,
+                etrap_id=etrap,
+                dogowors__activate_at__isnull=False,
+                dogowors__deactivate_at__isnull=True,
+                dogowors__balance_type="telefon"
+            )
+
+            # Исключаем текущего пользователя при редактировании
+            if user_id:
+                query = query.exclude(id=user_id)
+
+            abonent_exists = query.exists()
+
+            return Response({
+                "success": True,
+                "exists": abonent_exists,
+                "message": "Check completed successfully"
+            })
+        else:
+            return Response({
+                "success": False, 
+            }, status=400)
         
     except Exception as e:
         ic("Error in checkActiveOrNot:", str(e))
@@ -83,6 +109,7 @@ def checkUniqueDogowor(request):
         # Получаем параметры из query string
         dogowor = request.GET.get('dogowor')
         dogowor_type = request.GET.get('dogowor_type')
+        dogowor_id = request.GET.get('id')
         
         
         # Валидация обязательных параметров
@@ -91,10 +118,18 @@ def checkUniqueDogowor(request):
                 "success": False,
                 "error": "Dogowor parameter is required"
             }, status=400)
+            
+            
+        qs = UserDogowor.objects.filter(dogowor=dogowor, balance_type=dogowor_type)
+        
+        if dogowor_id:
+            qs = qs.exclude(id=dogowor_id)
+
+        dogowor_exists = qs.exists()
         
         
-        dogowor_exists = UserDogowor.objects.filter(dogowor=dogowor, balance_type=dogowor_type).exists()
-        ic(dogowor_exists)
+        # dogowor_exists = UserDogowor.objects.filter(dogowor=dogowor, balance_type=dogowor_type).exists()
+        # ic(dogowor_exists)
         return Response({
             "success": True,
             "exists": dogowor_exists,
@@ -126,7 +161,10 @@ def get_filtered_users(request):
     phone = request.GET.get('phone', '')
     dogowor = request.GET.get('dogowor', '')
     address = request.GET.get('address', '')
-    ic(address)
+    # abonplata = request.GET.get('abonplata', '')
+    # services = request.GET.get('services', '')
+    
+    ic(is_active)
     
     # UserTable.objects.all().delete()
     # UserDogowor.objects.all().delete()
@@ -145,8 +183,21 @@ def get_filtered_users(request):
     qs = UserTable.objects.all()
 
     # Фильтруем по is_active
-    if is_active:
-        qs = qs.filter(is_active=(is_active == 'true'))
+    if is_active == 'true':
+        # Активные
+        ic("tut")
+        qs = qs.filter(
+            dogowors__activate_at__isnull=False,
+            dogowors__deactivate_at__isnull=True,
+            dogowors__balance_type="telefon"
+        ).distinct()
+        ic(qs)
+    elif is_active == 'false':
+        # Неактивные (имеют отключенные телефонные договоры)
+        qs = qs.filter(
+            dogowors__deactivate_at__isnull=False,
+            dogowors__balance_type="telefon"
+        ).distinct()
 
     # Фильтруем по предприятию
     if is_enterprises:
@@ -209,10 +260,13 @@ def get_filtered_users(request):
         dogowors_list = []
         for d in user.dogowors.all():
             dogowors_list.append({
+                "id": d.id,
                 "dogowor": d.dogowor,
                 "balance": d.balance.amount if hasattr(d, "balance") else 0,
-                "login": d.login.login if hasattr(d, "login") else None,
+                "login": d.login,
                 "balance_type": d.get_balance_type_display(),
+                "balance_type2": d.balance_type,
+                "comment": d.comment,
                 "activate_at": d.activate_at,
                 "deactivate_at": d.deactivate_at,
             })
@@ -224,12 +278,13 @@ def get_filtered_users(request):
             "name": user.name,
             "patronymic": user.patronymic,
             "phone": user.mobile_number,
-            "is_active": user.is_active,
+            # "is_active": user.is_active,
             "is_enterprises": user.is_enterprises,
             "account": user.account,
             "hb_type": user.hb_type,
             "etrap": str(user.etrap),
             "address": user.address,
+            "abonplata": user.abonplata,
             "dogowors": dogowors_list,
         })
 
@@ -246,3 +301,103 @@ def get_filtered_users(request):
         }
     })
 
+
+
+@api_view(['GET'])
+def get_user_for_update_telefoniya(request):
+    
+    dogoworId = request.GET.get("dogoworId")
+    
+    dogowor_obj = get_object_or_404(UserDogowor, id=dogoworId)
+    user = dogowor_obj.user
+
+    # user_services = UserService.objects.filter(user=user)
+    # for s in user_services:
+    #     ic(s.connected_by.username)
+    
+    # ⭐⭐⭐ ПОЛУЧАЕМ ПОДРОБНЫЕ ДАННЫЕ ОБ УСЛУГАХ ⭐⭐⭐
+    user_services = UserService.objects.filter(user=user, is_active=True).select_related('service')
+    services_data = []
+    services_ids = []
+    service_dates = {}  # ← ДОБАВИТЬ ЭТО!
+
+    for user_service in user_services:
+        services_ids.append(user_service.service_id)
+        services_data.append({
+            "id": user_service.service_id,
+            "service": user_service.service.service,
+            "price": user_service.service.price,
+            "actual_price": user_service.actual_price,
+            "date_connected": user_service.date_connected,
+            "is_active": user_service.is_active,
+        })
+        
+        # ⭐⭐⭐ ДОБАВЛЯЕМ ДАННЫЕ В service_dates ⭐⭐⭐
+        service_dates[str(user_service.service_id)] = {
+            "activate_at": user_service.date_connected,  # дата подключения
+            "deactivate_at": user_service.date_end if user_service.date_end else None,  # ← ИСПРАВЛЕНО: date_end вместо date_disconnected
+            "comment": user_service.comment
+        }
+
+    # ⭐⭐⭐ ФОРМИРУЕМ ДАННЫЕ ПОЛЬЗОВАТЕЛЯ ⭐⭐⭐
+    user_data = {
+        "id": user.id,
+        "number": user.number,
+        "name": user.name,
+        "surname": user.surname,
+        "patronymic": user.patronymic,
+        "address": user.address,
+        "mobile_number": user.mobile_number,
+        "is_enterprises": user.is_enterprises,
+        "account": user.account,
+        "hb_type": user.hb_type,
+        "etrap": user.etrap.id if user.etrap else None,
+        "abonplata": str(user.abonplata),
+        "services": services_ids,
+        "services_details": services_data,
+        "service_dates": service_dates,  # ← ДОБАВИТЬ ЭТО В ОТВЕТ!
+        
+    }
+    
+    # ⭐⭐⭐ ФОРМИРУЕМ ДАННЫЕ ДОГОВОРА ⭐⭐⭐
+    dogowor_data = {
+        "id": dogowor_obj.id,
+        "dogowor": dogowor_obj.dogowor,
+        "balance_type": dogowor_obj.balance_type,
+        "activate_at": dogowor_obj.activate_at,
+        "deactivate_at": dogowor_obj.deactivate_at,
+        "comment": dogowor_obj.comment,
+        "already_deactivated": True if dogowor_obj.deactivate_at else False
+    }
+    
+    ic(dogowor_data)
+    
+    return Response({
+        "success": True,
+        "user": user_data,
+        "dogowor": dogowor_data,
+    })
+    
+
+@api_view(['GET'])
+def get_all_services(request):
+    
+    services = Service.objects.filter(is_active=True)
+    
+    data = []
+    
+    for service in services:
+        data.append({
+            "id":service.id,
+            "service":service.service,
+            "price":service.price,
+        })
+    
+    
+    return Response({
+        "success": True,
+        "data": data,
+    })
+    
+    
+    

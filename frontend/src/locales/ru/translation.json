@@ -192,7 +192,90 @@
   "of": "из",
   "Show": "Показать",
   "Comment": "Комментарий",
-  "Enter comment": "Введите комментарий"
+  "Enter comment": "Введите комментарий",
+  "Total abonents": "Всего абонентов",
+  "Abonent updated successfully": "Абонент успешно обновлен",
+  "Activate At": "Дата активации",
+  "Deactivate At": "Дата деактивации",
+  "Number must be exactly 5 digits": "Номер должен состоять ровно из 5 цифр",
+  "Activate_at is required": "Дата активации является обязательным",
+  "You do not have access to this etrap": "У вас нет доступа к этому этрапу",
+  "No UserTable matches the given query.": "Абонент не найден",
+  "No UserDogowor matches the given query.": "Договор пользователя не найден",
+  "Number cannot be empty": "Номер не может быть пустым",
+  "Dogowor cannot be empty": "Договор не может быть пустым",
+  "Account must be a valid number": "Номер счета должен быть числом",
+  "enterAddress": "Введите адрес",
+  
+  "Settings": "Настройки",
+  "Click the upload button to change your photo": "Нажмите на кнопку загрузки чтобы изменить фото",
+  "Cancel": "Отмена",
+  "Save Changes": "Сохранить изменения",
+  "Profile updated successfully": "Профиль успешно обновлен",
+  "Failed to update profile": "Не удалось обновить профиль",
+  "Network error": "Ошибка сети",
+  "Please select an image file": "Пожалуйста, выберите файл изображения",
+  "Image size should be less than 5MB": "Размер изображения должен быть меньше 5MB",
+  "Enter first name": "Введите имя",
+  "Enter last name": "Введите фамилию",
+  
+  "Services and Abonplata": "Услуги и Абонплата",
+  "Abonplata": "Абонплата", 
+  "Enter abonplata amount": "Введите сумму абонплаты",
+  "Services": "Услуги",
+  "Select services": "Выберите услуги",
+  "Hold Ctrl to select multiple services": "Удерживайте Ctrl для выбора нескольких услуг",
+  "Selected services": "Выбранные услуги",
+  "Abonplata cannot be negative": "Абонплата не может быть отрицательной",
+  "Abonplata is required": "Абонплата обязательна",
+
+  "Abonplata must be a valid number": "Абонплата должна быть числом",
+  "Use dot as decimal separator": "Используйте точку как разделитель десятичных дробей",
+  "Example": "Например",
+
+
+  "Total": "Итого",
+  "No services selected": "Услуги не выбраны",
+  "services selected": "услуг выбрано",
+
+  "Installation": "Установка",
+  "Charge for installation": "Начислить за установку", 
+  "Charge installation fee": "Начислить плату за установку",
+  "Select installation price": "Выберите стоимость установки",
+  "Installation fee can only be charged when creating a new abonent": "Плата за установку может быть начислена только при создании нового абонента",
+
+  "Total amount to be charged": "Общая сумма к начислению",
+  "Grand Total": "ИТОГО",
+
+  "Use deactivation date": "Используйте дату отключения",
+  "Service management is available only through activation/deactivation dates": "Управление услугой доступно только через даты активации/отключения",
+
+  "Existing service": "Существующая услуга",
+  "Activation date": "Дата активации",
+  "Deactivation date": "Дата деактивации",
+  "Service will be activated": "Услуга будет активирована",
+  "For existing services you can only set deactivation date": "Для существующих услуг можно указать только дату деактивации",
+  "Clear": "Очистить",
+  "New service": "Новая услуга",
+  "New service will be activated": "Новая услуга будет активирована",
+  "Reset to main date": "Сбросить к основной дате",
+
+  "Activation date cannot be changed for existing abonent": "Дату активации нельзя изменить для существующего абонента",
+  "This abonent is already deactivated": "Этот абонент уже деактивирован",
+  "Service is active": "Услуга активна",
+  "activated:": "активирована",
+  "Deactivate now": "Деактивировать сейчас",
+  "Service will be deactivated": "Услуга будет деактивирована",
+
+  "Service comment": "Комментарий к услуге",
+  "Optional: specify the reason for service activation or deactivation": "Необязательно: укажите причину активации или деактивации услуги",
+  "Enter reason for activation/deactivation...": "Укажите причину активации/деактивации...",
+  "View mode only - no editing allowed": "Только просмотр - редактирование запрещено",
+
+  "abonplata": "Абонплата"
+
+
+
 
 
 

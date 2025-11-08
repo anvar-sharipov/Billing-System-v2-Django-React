@@ -24,5 +24,15 @@ python manage.py collectstatic --noinput
 echo "Initializing admin and groups..."
 python manage.py initadmin
 
-echo "Starting Daphne server..."
-exec daphne -b 0.0.0.0 -p 8000 backend.asgi:application
+echo "Starting Gunicorn server..."
+exec gunicorn backend.wsgi:application \
+    --bind 0.0.0.0:8000 \
+    --workers 4 \
+    --threads 2 \
+    --timeout 3600 \
+    --graceful-timeout 3600 \
+    --limit-request-line 0 \
+    --limit-request-field_size 0 \
+    --access-logfile - \
+    --error-logfile - \
+    --log-level info

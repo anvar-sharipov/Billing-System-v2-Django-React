@@ -11,4 +11,5 @@ urlpatterns = [
     path('groups/', list_groups, name='groups'),
     path('users/', get_users, name='accounts_users'),
     path("me/", MeView.as_view(), name="me"),
+    path('user/profile/', update_user_profile, name='update-user-profile'),
 ]

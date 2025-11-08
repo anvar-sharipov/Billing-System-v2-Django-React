@@ -10,6 +10,9 @@ from django.contrib.auth.models import Group
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.db import IntegrityError
 
+
+from django.core.files.storage import default_storage
+
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -98,3 +101,50 @@ class MeView(APIView):
     def get(self, request):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
+    
+    
+
+
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def update_user_profile(request):
+    user = request.user
+    
+    # Проверяем, является ли пользователь админом для изменения имени/фамилии
+    is_admin = user.groups.filter(name='admin').exists()
+    
+    updated = False
+    
+    # Обновляем изображение (доступно всем аутентифицированным пользователям)
+    if 'image' in request.FILES:
+        # Удаляем старое изображение если оно существует
+        if user.image:
+            try:
+                default_storage.delete(user.image.path)
+            except Exception as e:
+                print(f"Error deleting old image: {e}")
+        user.image = request.FILES['image']
+        updated = True
+    
+    # Обновляем имя и фамилию только если пользователь админ
+    if is_admin:
+        if 'first_name' in request.data:
+            user.first_name = request.data['first_name']
+            updated = True
+        if 'last_name' in request.data:
+            user.last_name = request.data['last_name']
+            updated = True
+    
+    if updated:
+        user.save()
+    
+    return Response({
+        'id': user.id,
+        'username': user.username,
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'image': user.image.url if user.image else None,
+        'groups': list(user.groups.values_list('name', flat=True))
+    })

@@ -3,12 +3,12 @@ import myAxios from "../../../services/myAxios";
 import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-const UniqueAbonentChecker = ({ values, setHasDuplicate }) => {
+const UniqueAbonentChecker = ({ values, setHasDuplicate, editedUserId }) => {
   const { t } = useTranslation();
   const [checking, setChecking] = useState(false);
 
-  const checkUnique = async (number, etrap, is_active) => {
-    if (!is_active || !number || !etrap || number.length !== 5) {
+  const checkUnique = async (number, etrap, activate_at, deactivate_at) => {
+    if (!activate_at || deactivate_at || !number || !etrap || number.length !== 5) {
       setHasDuplicate(false);
       setChecking(false);
       return;
@@ -17,7 +17,7 @@ const UniqueAbonentChecker = ({ values, setHasDuplicate }) => {
     try {
       setChecking(true);
       const res = await myAxios.get("core/checkActiveOrNot", {
-        params: { number, etrap, is_active },
+        params: { number, etrap, activate_at, deactivate_at, id: editedUserId },
       });
       setHasDuplicate(res.data.exists);
     } catch (err) {
@@ -29,21 +29,23 @@ const UniqueAbonentChecker = ({ values, setHasDuplicate }) => {
   };
 
   useEffect(() => {
-    const { number, etrap, is_active } = values;
+    const { number, etrap, activate_at, deactivate_at } = values;
+
+    
     
     // Сбрасываем состояние при каждом изменении
     setHasDuplicate(false);
     
     if (number && etrap) {
       const timeoutId = setTimeout(() => {
-        checkUnique(number, etrap, is_active);
+        checkUnique(number, etrap, activate_at, deactivate_at);
       }, 500);
       
       return () => clearTimeout(timeoutId);
     } else {
       setHasDuplicate(false);
     }
-  }, [values.number, values.etrap, values.is_active]);
+  }, [values.number, values.etrap, values.activate_at, values.deactivate_at]);
 
   return null;
 };

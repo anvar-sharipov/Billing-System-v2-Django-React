@@ -193,5 +193,89 @@
   "of": "из",
   "Show": "Görkez",
   "Comment": "Kommentariýa",
-  "Enter comment": "Kommentariýa ýazyň"
+  "Enter comment": "Kommentariýa ýazyň",
+  "Total abonents": "Jemi abonentler",
+  "Abonent updated successfully": "Abonentiň maglumatlary üstünlikli üýtgedildi",
+  "Activate At": "Aktiwlenen wagty",
+  "Deactivate At": "Öçürülen wagty",
+  "Number must be exactly 5 digits": "Nomer 5 sifrdan ybarat bolmaly",
+  "Activate_at is required": "Active senesi hökmanydyr",
+  "You do not have access to this etrap": "Siziň bu etraba giriş hukugyňyz ýok",
+  "No UserTable matches the given query.": "Abonent tapylmady",
+  "No UserDogowor matches the given query.": "Ulanyjynyň dogowory tapylmady",
+  "Number cannot be empty": "Nomer boş bolmaly däl",
+  "Dogowor cannot be empty": "Dogowor boş bolmaly däl",
+  "Account must be a valid number": "Hasap üçin san giriziň",
+  "enterAddress": "Salgyny goýuň",
+
+  "Settings": "Sazlamalar",
+  "Click the upload button to change your photo": "Suraty üýtgetmek üçin ýükleme düwmesine basyň",
+  "Cancel": "Ýatyr",
+  "Save Changes": "Üýtgeşmikleri saklamak",
+  "Profile updated successfully": "Profil üstünlikli jaňlandy",
+  "Failed to update profile": "Profili jaňlap bolmady",
+  "Network error": "Ulag ýalňyşlygy",
+  "Please select an image file": "Surat faýlyny saýlaň",
+  "Image size should be less than 5MB": "Suratyň göwrümi 5MB-dan az bolmaly",
+  "Enter first name": "Adynyzy giriziň",
+  "Enter last name": "Familiýanyzy giriziň",
+
+  "Services and Abonplata": "Hyzmatlar we Abonent tölegi",
+  "Abonplata": "Abonent tölegi",
+  "Enter abonplata amount": "Abonent töleginiň mukdaryny giriziň",
+  "Services": "Hyzmatlar",
+  "Select services": "Hyzmatlary saýlaň",
+  "Hold Ctrl to select multiple services": "Birnäçe hyzmaty saýlamak üçin Ctrl düwmesini basyp tutuň",
+  "Selected services": "Saýlalan hyzmatlar",
+  "Abonplata cannot be negative": "Abonent tölegi minus bolup bilmeýär",
+  "Abonplata is required": "Abonent tölegi hökmany",
+
+  "Abonplata must be a valid number": "Abonent tölegi san bolmaly",
+  "Use dot as decimal separator": "Onluk belgisi hökmünde nokat ulanyň",
+  "Example": "Mysal üçin",
+
+  "Total": "Jemi",
+  "No services selected": "Hiç hynat saýlanmady",
+  "services selected": "hynat saýlandy",
+
+  "Installation": "Ornatma",
+  "Charge for installation": "Ornatma üçin töleg hasapla",
+  "Charge installation fee": "Ornatma tölegini hasapla",
+  "Select installation price": "Ornatma bahasyny saýlaň",
+  "Installation fee can only be charged when creating a new abonent": "Ornatma tölegi diňe täze abonent döredilende hasaplanyp biler",
+
+  "Total amount to be charged": "Hasaplanjak jemi mukdar",
+  "Grand Total": "JEMI",
+
+  "Use deactivation date": "Öçüriş senesini ulanyň",
+  "Service management is available only through activation/deactivation dates": "Hyzmat dolandyryşy diňe işjeňleşdirilen/öçüriş seneleri arkaly elýeterlidir",
+
+  "Existing service": "Bar bolan hyzmat",
+  "Activation date": "Işjeňleşdirilen senesi",
+  "Deactivation date": "Işden aýrylan senesi",
+  "Service will be activated": "Hyzmat işjeňleşdiriler",
+  "For existing services you can only set deactivation date": "Bar bolan hyzmatlar üçin diňe işden aýryş senesini saýlap bolýar",
+  "Clear": "Arassala",
+  "New service": "Täze hyzmat",
+  "New service will be activated": "Täze hyzmat işjeňleşdiriler",
+  "Reset to main date": "Esasy senä gaýtarmak",
+
+  "Activation date cannot be changed for existing abonent": "Öňürtip bar abonent üçin işjeňleşdirilen senesi üýtgedilip bilmeýär",
+  "This abonent is already deactivated": "Bu abonent eýýäm öçürildi",
+  "Service is active": "Hyzmat işjeň",
+  "activated:": "işjeňleşdirildi",
+  "Deactivate now": "Şu wagt öçüriň",
+  "Service will be deactivated": "Hyzmat öçüriler",
+
+  "Service comment": "Hyzmat barada düşündiriş",
+  "Optional: specify the reason for service activation or deactivation": "Islegli: hyzmaty işjeňleşdirmegiň ýa-da öçürmegiň sebäbini görkeziň",
+  "Enter reason for activation/deactivation...": "Işjeňleşdirmegiň / öçürmegiň sebäbini giriziň...",
+  "View mode only - no editing allowed": "Diňleýji tertibi - üýtgetmek rugsat berilmeýär",
+
+  "abonplata": "Abonplata"
+
+
+
+
+
 }

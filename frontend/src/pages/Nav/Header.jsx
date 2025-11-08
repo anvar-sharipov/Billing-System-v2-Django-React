@@ -7,6 +7,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../Auth/AuthContext";
 import { UserContext } from "../Auth/UserContext";
 import { useNotifications } from "../../components/Notifications";
+import SettingsModal from "./SettingsModal";
 
 function Header({ theme, toggleTheme }) {
   const { t, i18n } = useTranslation();
@@ -17,6 +18,9 @@ function Header({ theme, toggleTheme }) {
   const { user, logout } = useContext(AuthContext);
   const { notificationSuccess } = useNotifications();
   const navigate = useNavigate();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // console.log("userInfo", userInfo);
 
   const switchLanguage = (lang) => {
     i18n.changeLanguage(lang);
@@ -161,7 +165,10 @@ function Header({ theme, toggleTheme }) {
                         <span>{t("Profile")}</span>
                       </button>
 
-                      <button className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left text-gray-700 dark:text-gray-300">
+                      <button
+                        onClick={() => setIsSettingsOpen(true)}
+                        className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left text-gray-700 dark:text-gray-300"
+                      >
                         <Settings className="w-5 h-5" />
                         <span>{t("Settings")}</span>
                       </button>
@@ -338,6 +345,8 @@ function Header({ theme, toggleTheme }) {
 
       {/* Click outside to close user menu */}
       {isUserMenuOpen && <div className="fixed inset-0 z-40" onClick={() => setIsUserMenuOpen(false)} />}
+
+      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </>
   );
 }

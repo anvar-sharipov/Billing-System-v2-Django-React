@@ -33,7 +33,7 @@ class Command(BaseCommand):
             if not User.objects.filter(username=username).exists():
                 User.objects.create_superuser(
                     username=username,
-                    password=password,  # ИЗМЕНИТЕ НА БЕЗОПАСНЫЙ!
+                    password=password,
                     first_name='Anvar',
                     last_name='Sharipov'
                 )
@@ -53,13 +53,18 @@ class Command(BaseCommand):
         groups_config = {
             'admin': {
                 'description': 'Full system access',
-                'permissions': []  # Все права будут назначены вручную
+                'permissions': []
             },
             'AMTC_access': {
                 'description': 'AMTS code access',
                 'permissions': []
             },
+            'viewer': {
+                'description': 'View only access',
+                'permissions': []
+            },
         }
+        
         # Добавляем группы по всем этрапам
         for etrap_name in ETRAPS.keys():
             groups_config[etrap_name] = {
@@ -69,12 +74,19 @@ class Command(BaseCommand):
 
         for group_name, config in groups_config.items():
             try:
-                group, created = Group.objects.get_or_create(name=group_name)
+                group, created = Group.objects.get_or_create(
+                    name=group_name,
+                    defaults={'description': config['description']}
+                )
                 if created:
                     self.stdout.write(
                         self.style.SUCCESS(f'✓ Group "{group_name}" created')
                     )
                 else:
+                    # Обновляем описание если группа уже существует
+                    if group.description != config['description']:
+                        group.description = config['description']
+                        group.save()
                     self.stdout.write(
                         self.style.WARNING(f'✗ Group "{group_name}" already exists')
                     )
@@ -83,13 +95,13 @@ class Command(BaseCommand):
                     self.style.ERROR(f'✗ Error creating group {group_name}: {e}')
                 )
 
-        # Добавить админа в группу Administrators
+        # Добавить админа в группу admin (теперь используем 'admin' вместо 'Administrators')
         try:
             admin_user = User.objects.get(username=username)
-            admin_group = Group.objects.get(name='Administrators')
+            admin_group = Group.objects.get(name='admin')  # Изменено на 'admin'
             admin_user.groups.add(admin_group)
             self.stdout.write(
-                self.style.SUCCESS('✓ Admin added to Administrators group')
+                self.style.SUCCESS('✓ Admin added to admin group')
             )
         except Exception as e:
             self.stdout.write(

@@ -3,7 +3,7 @@ import myAxios from "../../../services/myAxios";
 
 import { useTranslation } from "react-i18next";
 
-const UniqueDogoworChecker = ({ values, setHasDuplicateDogowor }) => {
+const UniqueDogoworChecker = ({ values, setHasDuplicateDogowor, editedDogoworId }) => {
   const { t } = useTranslation();
   const [checking, setChecking] = useState(false);
 
@@ -17,7 +17,7 @@ const UniqueDogoworChecker = ({ values, setHasDuplicateDogowor }) => {
     try {
       setChecking(true);
       const res = await myAxios.get("core/checkUniqueDogowor", {
-        params: { dogowor, dogowor_type: "telefon" },
+        params: { dogowor, dogowor_type: "telefon", id: editedDogoworId },
       });
       setHasDuplicateDogowor(res.data.exists);
     } catch (err) {

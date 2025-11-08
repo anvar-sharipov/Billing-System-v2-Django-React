@@ -10,7 +10,7 @@ from datetime import datetime
 from icecream import ic
 
 from rest_framework import viewsets
-from .models import Etrap, UserTable, UserDogowor, DogoworBalance, DogoworAccrual
+from .models import *
 from .serializers import EtrapSerializer
 
 from rest_framework.decorators import api_view
@@ -19,6 +19,21 @@ from django.core.exceptions import ValidationError
 import re
 from datetime import datetime
 from django.db import transaction
+from django.shortcuts import get_object_or_404
+from decimal import InvalidOperation
+
+def get_group_list(request):
+        authenticated_user = request.user
+        if authenticated_user:
+            return list(authenticated_user.groups.values_list('name', flat=True))
+        else:
+            return []
+        
+def check_is_admin(request):
+        authenticated_user = request.user
+        if authenticated_user:
+            return "admin" in list(authenticated_user.groups.values_list('name', flat=True))
+        return False
 
 
 class EtrapViewSet(viewsets.ModelViewSet):
@@ -198,179 +213,380 @@ def upload_users_from_excel(request):
         }, status=500)
 
 
+ 
 @api_view(['POST'])
-def create_abonent(request):
+def save_abonent(request):
+    ic("save_abonent")
+    
+    def get_group_list(request):
+        authenticated_user = request.user
+        if authenticated_user:
+            return list(authenticated_user.groups.values_list('name', flat=True))
+        else:
+            return []
+    
     try:
         data = request.data
+        user_group_list = get_group_list(request)
         
-        # 1. Required fields
+        ic(data)
+        
+    
+        activate_at = data.get('activate_at')
+        deactivate_at = data.get('deactivate_at')
+        
+        nach_for_install = data.get('nach_for_install')
+        if nach_for_install or nach_for_install == "True":
+            install_price = data.get('install_price')
+        else:
+            install_price = Decimal(0)
+
+   
+        activate_at_datetime = None
+        if activate_at:
+            activate_at_datetime = datetime.fromisoformat(activate_at)
+         
+        deactivate_at_datetime = None
+        if deactivate_at:  # Только если не пустая строка
+            deactivate_at_datetime = datetime.fromisoformat(deactivate_at)
+  
+        if not activate_at_datetime:
+            return Response({"success": False, "error": "Дата активации является обязательным"}, status=400)
+
+        user_id = data.get("user_id")
+        
+        # ⭐⭐⭐ ДОБАВЛЯЕМ ПРОВЕРКУ ABONPLATA ⭐⭐⭐
+        abonplata = data.get('abonplata', '0.00')
+        try:
+            abonplata_decimal = Decimal(str(abonplata))
+            if abonplata_decimal < 0:
+                return Response({"success": False, "error": "Abonplata cannot be negative"}, status=400)
+        except (ValueError, InvalidOperation):
+            return Response({"success": False, "error": "Invalid abonplata format"}, status=400)
+
+        # ⭐⭐⭐ ДОБАВЛЯЕМ ПРОВЕРКУ SERVICES И SERVICE_DATES ⭐⭐⭐
+        services_data = data.get('services', [])
+        service_dates = data.get('service_dates', {})
+        
+        if not isinstance(services_data, list):
+            services_data = []
+        if not isinstance(service_dates, dict):
+            service_dates = {}
+        
+        # Проверяем существование всех услуг
+        valid_services = []
+        for service_id in services_data:
+            try:
+                service = Service.objects.get(id=service_id, is_active=True)
+                valid_services.append(service)
+            except Service.DoesNotExist:
+                return Response({"success": False, "error": f"Service with id {service_id} does not exist or is not active"}, status=400)
+
+   
+        # 1. Проверка обязательных полей
         required_fields = ['number', 'name', 'etrap', 'dogowor']
         for field in required_fields:
             if not data.get(field):
-                return Response({
-                    "success": False,
-                    "error": f"Field {field} is required"
-                }, status=400)
+                return Response({"success": False, "error": f"Field {field} is required"}, status=400)
+
+        number = str(data['number']).strip()
+        dogowor = str(data['dogowor']).strip()
         
-        # 2. Number validation (digits only)
-        number = data['number']
-        if not number.isdigit():
-            return Response({
-                "success": False,
-                "error": "Number must contain only digits"
-            }, status=400)
+        # Добавь проверку что не пустые:
+        if not number:
+            return Response({"success": False, "error": "Number cannot be empty"}, status=400)
+        if not dogowor:
+            return Response({"success": False, "error": "Dogowor cannot be empty"}, status=400)
+
+        # 2. Валидации
+        if not number.isdigit() or len(number) != 5:
+            return Response({"success": False, "error": "Number must be exactly 5 digits"}, status=400)
+        if number not in dogowor:
+            return Response({"success": False, "error": "Dogowor must contain abonent number"}, status=400)
+
+        is_enterprises = data.get('is_enterprises', False)
+        if is_enterprises:
+            account = data.get('account')
+            hb_type = data.get('hb_type')
+            if account in (None, "") or hb_type in (None, ""):
+                return Response({"success": False, "error": "Account and HB type are required for enterprises"}, status=400)
+            account = str(account).strip()
+            hb_type = str(hb_type).strip()
+            # Конвертация в int для account
+            try:
+                account_int = int(account) if account else None
+            except ValueError:
+                return Response({"success": False, "error": "Account must be a valid number"}, status=400)
+    
         
-        # 3. Mobile number validation (optional)
-        # mobile_number = data.get('mobile_number')
-        # if mobile_number and not mobile_number.isdigit():
-        #     return Response({
-        #         "success": False,
-        #         "error": "Mobile number must contain only digits"
-        #     }, status=400)
-        
-        # 4. Check number uniqueness
-        # if Abonent.objects.filter(number=number).exists():
-        #     return Response({
-        #         "success": False, 
-        #         "error": "Abonent with this number already exists"
-        #     }, status=400)
-        
-        # 5. Dogowor validation (must end with number)
-        dogowor = data['dogowor']
-        if not str(number) in str(dogowor):
-            return Response({
-                "success": False,
-                "error": "Contract number must end with abonent number"
-            }, status=400)
-            
-            
-        
-        # 6. For enterprises, validate account and hb_type
-        if data.get('is_enterprises'):
-            if not data.get('account'):
-                return Response({
-                    "success": False,
-                    "error": "Account is required for enterprises"
-                }, status=400)
-            if not data.get('hb_type'):
-                return Response({
-                    "success": False, 
-                    "error": "HB type is required for enterprises"
-                }, status=400)
-        
-        # 7. For individuals, validate surname
-        if not data.get('is_enterprises') and not data.get('surname'):
-            return Response({
-                "success": False,
-                "error": "Surname is required for individuals"
-            }, status=400)
-            
+        elif not data.get('surname'):
+            return Response({"success": False, "error": "Surname is required for individuals"}, status=400)
         
         etrap_id = data.get("etrap")
-        if not Etrap.objects.filter(id=etrap_id).exists():
-            return Response({
-                "success": False,
-                "error": "Etrap dosnt exsist in db"
-            }, status=400)
-        else:
-            etrap_obj = Etrap.objects.get(id=etrap_id)
-            
-        number = data.get("number")
-        # Проверка длины
-        if len(number) != 5:
-            return Response({
-                "success": False,
-                "error": "Number must be exactly 5 characters long"
-            }, status=400)
-
-        # Проверка что состоит только из цифр
-        if not number.isdigit():
-            return Response({
-                "success": False, 
-                "error": "Number must contain only digits"
-            }, status=400)
-            
-        name = data.get('name')
-        
-        is_enterprises = data.get('is_enterprises')
-        address = data.get('address')
-        mobile_number = data.get('mobile_number')
-        is_active = data.get('is_active')
-        comment = data.get('comment')
-        
-        
-        # ic(comment)
-        # ic(name)
-        # ic(is_enterprises)
-        # ic(address)
-        # ic(mobile_number)
-        # ic(is_active)
-        
-        if UserDogowor.objects.filter(dogowor=dogowor, balance_type="telefon").exists():
-            return Response({
-                "success": False, 
-                "error": "Dogowor already exsist"
-            }, status=400)
-        
-        print("Data validation passed!")
-        
         try:
-            with transaction.atomic():
-                if is_enterprises:
-                    account = data.get('account')
-                    hb_type = data.get('hb_type')
-                    ic(account)
-                    ic(hb_type)
-                    user = UserTable.objects.create(
-                        number=number,
-                        etrap=etrap_obj,
-                        name=name,
-                        is_enterprises=True,
-                        address=address,
-                        mobile_number=mobile_number,
-                        is_active=is_active,
-                        account=account,
-                        hb_type=hb_type,
-                    )
-                    # ic(account)
-                    # ic(hb_type)
-                else:
-                    surname = data.get('surname')
-                    patronymic = data.get('patronymic')
-                    user = UserTable.objects.create(
-                        number=number,
-                        etrap=etrap_obj,
-                        name=name,
-                        surname=surname,
-                        patronymic=patronymic,
-                        is_enterprises=False,
-                        address=address,
-                        mobile_number=mobile_number,
-                        is_active=is_active,
-                    )
-                    # ic(surname)
-                    # ic(patronymic)
-                    
-                
-                dogowor_obj = UserDogowor.objects.create(user=user, dogowor=dogowor, balance_type='telefon', activate_at=datetime.now(), comment=comment)
-                DogoworBalance.objects.create(dogowor=dogowor_obj)
-               
-                1/0
-                return Response({
-                    "success": True,
-                    "message": "Abonent created successfully"
-                }, status=201)
-
-        except Exception as e:
-                ic(e)
-                return Response({
-                    "success": False, 
-                    "error": f"transaction error = {str(e)}"
-                }, status=400)
-
+            etrap_obj = Etrap.objects.get(id=etrap_id)
+        except Etrap.DoesNotExist:
+            return Response({"success": False, "error": "Etrap does not exist"}, status=400)
         
+        if 'admin' not in user_group_list:
+            if etrap_obj.etrap not in user_group_list:
+                return Response({"success": False, "error": "You do not have access to this etrap"}, status=400)
+
+        # Проверка уникальности dogowor
+        dogowor_qs = UserDogowor.objects.filter(dogowor=dogowor, balance_type="telefon")
+        if user_id:
+            dogowor_qs = dogowor_qs.exclude(user_id=user_id)
+        if dogowor_qs.exists():
+            return Response({"success": False, "error": "Dogowor already exists"}, status=400)
+        
+        
+        mobile_number = ''.join(filter(str.isdigit, str(data.get("mobile_number", ""))))
+        with transaction.atomic():
+            # UPDATE
+            if user_id:
+                user = get_object_or_404(UserTable, id=user_id)
+        
+                user.number = number
+                
+                new_name = data.get('name')
+                if new_name is not None:
+                    user.name = new_name.strip()
+
+                new_address = data.get('address')
+                if new_address is not None:
+                    user.address = str(new_address).strip()
+                    
+            
+                user.mobile_number = mobile_number
+    
+                user.etrap = etrap_obj
+                user.is_enterprises = is_enterprises
+                
+                # ⭐⭐⭐ СОХРАНЯЕМ ABONPLATA ⭐⭐⭐
+                user.abonplata = abonplata_decimal
+                
+                if is_enterprises:
+                    user.account = account_int
+                    user.hb_type = hb_type
+                    user.surname = ''
+                    user.patronymic = ''
+                else:
+                    new_surname = data.get('surname')
+                    if new_surname is not None:
+                        user.surname = str(new_surname).strip()
+                    if not user.surname:
+                        return Response({"success": False, "error": "Surname is required for individuals"}, status=400)
+
+                    new_patronymic = data.get('patronymic')
+                    if new_patronymic is not None:
+                        user.patronymic = str(new_patronymic).strip()
+                        
+                    user.account = None
+                    user.hb_type = '' 
+                user.save()
+
+                # ⭐⭐⭐ ОБНОВЛЯЕМ УСЛУГИ С УЧЕТОМ SERVICE_DATES ⭐⭐⭐
+                # Получаем существующие услуги пользователя
+                existing_user_services = UserService.objects.filter(user=user)
+                
+                # Создаем словарь существующих услуг для быстрого доступа
+                existing_services_dict = {us.service_id: us for us in existing_user_services}
+                
+                # Обрабатываем услуги из запроса
+                total_service_price = 0
+                new_services_to_charge = []  # Список новых услуг для списания
+                for service in valid_services:
+                    service_id = str(service.id)
+                    
+                    service_date_info = service_dates.get(service_id, {})
+                    
+                    activate_date = service_date_info.get('activate_at')
+                    deactivate_date = service_date_info.get('deactivate_at')
+                    service_comment = service_date_info.get("comment", "")
+                
+                    
+                    # Преобразуем даты в datetime объекты
+                    activate_datetime = None
+                    if activate_date:
+                        activate_datetime = datetime.fromisoformat(activate_date)
+                    
+                    deactivate_datetime = None
+                    if deactivate_date:
+                        deactivate_datetime = datetime.fromisoformat(deactivate_date)
+                        
+                    # ⭐⭐⭐ ПРОВЕРЯЕМ НОВАЯ ЛИ УСЛУГА И АКТИВНА ЛИ ОНА ⭐⭐⭐
+                    is_new_service = service.id not in existing_services_dict
+                    is_service_active = activate_datetime and not deactivate_datetime
+                    
+                    # Если услуга НОВАЯ и АКТИВНА - добавляем к списанию
+                    if is_new_service and is_service_active:
+                        total_service_price += service.price
+                        new_services_to_charge.append(service.service)  # Для логирования
+                        
+                 
+                    
+                    # Если услуга уже существует - обновляем
+                    if service.id in existing_services_dict:
+                        user_service = existing_services_dict[service.id]
+                        
+                        # ⭐⭐⭐ ЕСЛИ СУЩЕСТВУЮЩАЯ УСЛУГА БЫЛА ОТКЛЮЧЕНА И СНОВА АКТИВИРУЕТСЯ - СПИСЫВАЕМ ⭐⭐⭐
+                        was_service_deactivated = user_service.date_end is not None
+                        is_reactivating = was_service_deactivated and not deactivate_datetime
+                        
+                        if is_reactivating:
+                            total_service_price += service.price
+                            new_services_to_charge.append(f"{service.service}")
+            
+                        # Обновляем даты если они изменились
+                        if activate_datetime:
+                            user_service.date_connected = activate_datetime
+                        if deactivate_datetime:
+                            user_service.date_end = deactivate_datetime
+                            user_service.is_active = False
+                        elif deactivate_date == "":  # Если дата деактивации очищена
+                            user_service.date_end = None
+                            user_service.is_active = True
+                        user_service.comment = service_comment
+                        
+                        user_service.updated_by = request.user if request.user.is_authenticated else None
+                        user_service.save()
+                    else:
+                        # Создаем новую услугу
+                        UserService.objects.create(
+                            user=user,
+                            service=service,
+                            actual_price=service.price,
+                            date_connected=activate_datetime or activate_at_datetime,
+                            date_end=deactivate_datetime,
+                            is_active=not bool(deactivate_datetime),  # Активна если нет даты отключения
+                            connected_by=request.user if request.user.is_authenticated else None,
+                            comment=service_comment
+                        )
+                
+     
+                ic(total_service_price)
+                ic(new_services_to_charge)
+                1/0
+                # Удаляем услуги которые больше не выбраны
+                current_service_ids = [service.id for service in valid_services]
+                services_to_delete = existing_user_services.exclude(service_id__in=current_service_ids)
+                services_to_delete.delete()
+
+                dogowor_obj = get_object_or_404(UserDogowor, id=data.get("dogowor_id"))
+                dogowor_obj.dogowor = dogowor
+                
+                new_comment = data.get('comment')
+                if new_comment is not None:
+                    dogowor_obj.comment = str(new_comment).strip()
+                    
+                dogowor_obj.activate_at = activate_at_datetime
+                
+                if deactivate_at is not None:
+                    dogowor_obj.deactivate_at = deactivate_at_datetime if deactivate_at else None
+                    
+                    # Если установлена дата деактивации договора - отключаем все активные услуги
+                    if deactivate_at_datetime:
+                        UserService.objects.filter(
+                            user=user, 
+                            is_active=True,
+                            date_end__isnull=True  # Только те, у которых нет даты отключения
+                        ).update(
+                            date_end=deactivate_at_datetime,
+                            is_active=False,
+                            updated_by=request.user if request.user.is_authenticated else None
+                        )
+                
+                dogowor_obj.save()
+                message = "Abonent updated successfully"
+
+            else:
+                # CREATE
+                if is_enterprises:
+                    user = UserTable.objects.create(
+                        number=number,
+                        name=str(data.get('name')).strip(),
+                        etrap=etrap_obj,
+                        is_enterprises=True,
+                        address=str(data.get('address', '')).strip(),
+                        mobile_number=mobile_number,
+                        account=account_int,
+                        hb_type=hb_type,
+                        # ⭐⭐⭐ СОХРАНЯЕМ ABONPLATA ⭐⭐⭐
+                        abonplata=abonplata_decimal
+                    )
+                else:
+                    surname_cleaned = str(data.get('surname', '')).strip()
+                    if not surname_cleaned:  # Проверка после очистки
+                        return Response({"success": False, "error": "Surname is required for individuals"}, status=400)
+                    
+                    user = UserTable.objects.create(
+                        number=number,
+                        name=str(data.get('name')).strip(),
+                        surname=surname_cleaned,
+                        patronymic=str(data.get('patronymic', '')).strip(),
+                        etrap=etrap_obj,
+                        is_enterprises=False,
+                        address=str(data.get('address', '')).strip(),
+                        mobile_number=mobile_number,
+                        # ⭐⭐⭐ СОХРАНЯЕМ ABONPLATA ⭐⭐⭐
+                        abonplata=abonplata_decimal
+                    )
+                
+                # ⭐⭐⭐ ДОБАВЛЯЕМ УСЛУГИ С УЧЕТОМ SERVICE_DATES ⭐⭐⭐
+
+                new_services_to_charge = []
+                for service in valid_services:
+                    service_id = str(service.id)
+                    service_date_info = service_dates.get(service_id, {})
+                    
+                    activate_date = service_date_info.get('activate_at')
+                    deactivate_date = service_date_info.get('deactivate_at')
+                    
+                    new_services_to_charge.append(service)
+                    
+                    # Преобразуем даты в datetime объекты
+                    activate_datetime = activate_at_datetime  # По умолчанию используем общую дату активации
+                    if activate_date:
+                        activate_datetime = datetime.fromisoformat(activate_date)
+                    
+                    deactivate_datetime = None
+                    if deactivate_date:
+                        deactivate_datetime = datetime.fromisoformat(deactivate_date)
+                    
+                    UserService.objects.create(
+                        user=user,
+                        service=service,
+                        actual_price=service.price,
+                        date_connected=activate_datetime,
+                        date_end=deactivate_datetime,
+                        is_active=not bool(deactivate_datetime),  # Активна если нет даты отключения
+                        connected_by=request.user if request.user.is_authenticated else None
+                    )
+      
+                dogowor_obj = UserDogowor.objects.create(
+                    user=user,
+                    dogowor=dogowor,
+                    balance_type='telefon',
+                    activate_at=activate_at_datetime,
+                    deactivate_at=deactivate_at_datetime,
+                    comment=str(data.get('comment', '')).strip()
+                )
+                dogoworBalance = DogoworBalance.objects.create(dogowor=dogowor_obj)
+                if len(new_services_to_charge) > 0:
+                    for s in new_services_to_charge:
+                        DogoworAccrual.objects.create(dogowor=dogowor_obj, amount=Decimal(s.price), category="uslugi", description=s.service, period=activate_at_datetime)
+                        dogoworBalance.amount -= Decimal(s.price)
+                        
+                if abonplata_decimal > 0 or Decimal(install_price) > 0:
+                    total_abonplata_price = abonplata_decimal + Decimal(install_price)
+                    DogoworAccrual.objects.create(dogowor=dogowor_obj, amount=Decimal(total_abonplata_price), category="abonplata", description="abonplata", period=activate_at_datetime)
+                    dogoworBalance.amount -= Decimal(total_abonplata_price)
+                    
+                dogoworBalance.save()
+             
+                message = "Abonent created successfully"
+
+        return Response({"success": True, "message": message}, status=201)
+
     except Exception as e:
-        return Response({
-            "success": False,
-            "error": f"not transaction erorr = {str(e)}"
-        }, status=400)
+        return Response({"success": False, "error": str(e)}, status=400)

@@ -12,12 +12,12 @@ export default function RightBar() {
   const { etraps } = useEtraps(); // получаем этрапы
 
   const handleFilter = (filters) => {
-    console.log("Applied filters:", filters);
+    // console.log("Applied filters:", filters);
     // Здесь делайте запрос к API
   };
 
   const handleSearch = (searchData) => {
-    console.log("Search data:", searchData);
+    // console.log("Search data:", searchData);
     // Здесь делайте запрос к API
   };
 

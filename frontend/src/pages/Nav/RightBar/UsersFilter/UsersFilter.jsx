@@ -2,8 +2,8 @@ import { useFormik } from "formik";
 import { motion } from "framer-motion";
 import { User, Phone, FileText, Building, Activity, Hash, MapPin, X, ChevronDown, Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { memo } from "react";
-import { useNavigate } from "react-router-dom";
+import { memo, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 // Выносим компоненты наружу и мемоизируем
 const SearchInput = memo(({ field, placeholder, icon: Icon, label, value, onChange, hidden = false }) => (
@@ -63,53 +63,33 @@ FilterSelect.displayName = "FilterSelect";
 const UsersFilter = ({ onSearch, onFilter, etraps }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Функция для получения значений из URL
+  const getInitialValuesFromURL = () => {
+    const searchParams = new URLSearchParams(location.search);
+    
+    return {
+      searchType: searchParams.get('searchType') || "users",
+      // Поиск поля
+      surname: searchParams.get('surname') || "",
+      name: searchParams.get('name') || "",
+      patronymic: searchParams.get('patronymic') || "",
+      phone: searchParams.get('phone') || "",
+      dogowor: searchParams.get('dogowor') || "",
+      address: searchParams.get('address') || "",
+      // Фильтры
+      is_active: searchParams.get('is_active') || "",
+      is_enterprises: searchParams.get('is_enterprises') || "",
+      hb_type: searchParams.get('hb_type') || "",
+      account: searchParams.get('account') || "",
+      etrap: searchParams.get('etrap') || "",
+    };
+  };
 
   const formik = useFormik({
-    initialValues: {
-      searchType: "users",
-      // Поиск поля
-      surname: "",
-      name: "",
-      patronymic: "",
-      phone: "",
-      dogowor: "",
-      address: "",
-      // Фильтры
-      is_active: "",
-      is_enterprises: "",
-      hb_type: "",
-      account: "",
-      etrap: "",
-    },
-    // onSubmit: (values) => {
-    //   if (onSearch) {
-    //     onSearch({
-    //       type: values.searchType,
-    //       values: {
-    //         surname: values.surname,
-    //         name: values.name,
-    //         patronymic: values.patronymic,
-    //         phone: values.phone,
-    //         dogowor: values.dogowor,
-    //       },
-    //     });
-    //   }
-    //   if (onFilter) {
-    //     onFilter({
-    //       surname: values.surname,
-    //       name: values.name,
-    //       patronymic: values.patronymic,
-    //       phone: values.phone,
-    //       dogowor: values.dogowor,
-    //       is_active: values.is_active,
-    //       is_enterprises: values.is_enterprises,
-    //       hb_type: values.hb_type,
-    //       account: values.account,
-    //       etrap: values.etrap,
-    //     });
-    //   }
-    // },
-
+    initialValues: getInitialValuesFromURL(),
+    
     onSubmit: (values) => {
       // Собираем только те поля, где есть значение
       const params = new URLSearchParams();
@@ -131,6 +111,18 @@ const UsersFilter = ({ onSearch, onFilter, etraps }) => {
   });
 
   const { values, handleSubmit, setFieldValue, resetForm } = formik;
+
+  // Синхронизация формы с URL при изменении location
+  useEffect(() => {
+    const urlValues = getInitialValuesFromURL();
+    
+    // Обновляем все поля формы значениями из URL
+    Object.entries(urlValues).forEach(([key, value]) => {
+      if (formik.values[key] !== value) {
+        setFieldValue(key, value);
+      }
+    });
+  }, [location.search]);
 
   const handleSelectChange = (field, value) => {
     setFieldValue(field, value);

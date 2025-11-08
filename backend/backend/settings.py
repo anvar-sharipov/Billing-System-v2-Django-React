@@ -34,8 +34,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'core',
     'accounts',
-    'channels',
-    "chat",
+    # 'channels',
+    # "chat",
 ]
 
 MIDDLEWARE = [
@@ -66,7 +66,7 @@ TEMPLATES = [
     },
 ]
 
-# WSGI_APPLICATION = 'backend.wsgi.application'
+WSGI_APPLICATION = 'backend.wsgi.application'
 
 
 # Database
@@ -99,6 +99,11 @@ DATABASES = {
 #         "PASSWORD": config("POSTGRES_PASSWORD"),
 #         "HOST": config("POSTGRES_HOST"),
 #         "PORT": config("POSTGRES_PORT"),
+#         "CONN_MAX_AGE": 600,
+#         "OPTIONS": {
+#             "connect_timeout": 10,
+#             "options": "-c statement_timeout=3600000"
+#         }
 #     }
 # }
 
@@ -177,19 +182,19 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-ASGI_APPLICATION = 'backend.asgi.application'
+# ASGI_APPLICATION = 'backend.asgi.application'
 
 
 
 
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [(os.getenv("REDIS_HOST", "redis"), int(os.getenv("REDIS_PORT", 6379)))],
-        },
-    },
-}
+# CHANNEL_LAYERS = {
+#     "default": {
+#         "BACKEND": "channels_redis.core.RedisChannelLayer",
+#         "CONFIG": {
+#             "hosts": [(os.getenv("REDIS_HOST", "redis"), int(os.getenv("REDIS_PORT", 6379)))],
+#         },
+#     },
+# }
 
 
 
@@ -205,7 +210,8 @@ CSRF_TRUSTED_ORIGINS = [
     'http://192.168.0.2',
     'http://localhost',
 ]
-\
+
     
-DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600  # 100MB
-FILE_UPLOAD_MAX_MEMORY_SIZE = 104857600  # 100MB
+# 1 гигабайт
+DATA_UPLOAD_MAX_MEMORY_SIZE = 1073741824   # 1GB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 1073741824   # 1GB
