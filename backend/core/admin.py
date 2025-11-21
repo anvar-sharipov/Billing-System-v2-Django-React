@@ -5,6 +5,17 @@ from django.utils.html import format_html
 from django.utils import timezone
 from datetime import datetime
 
+from django.contrib.contenttypes.admin import GenericTabularInline
+
+
+from django.urls import reverse
+from django.utils.safestring import mark_safe
+from django.core.serializers.json import DjangoJSONEncoder
+from django.db.models import JSONField
+from django import forms
+import json
+
+
 # ---------- Etrap ----------
 @admin.register(Etrap)
 class EtrapAdmin(admin.ModelAdmin):
@@ -309,3 +320,33 @@ class UserActionHistoryAdmin(admin.ModelAdmin):
     list_filter = ('action_type', 'created_at')
     search_fields = ('user__username', 'model_name', 'object_id')
     readonly_fields = ('user', 'action_type', 'model_name', 'object_id', 'description', 'file', 'created_at')
+    
+    
+    
+
+@admin.register(AbonentHistory)
+class AbonentHistoryAdmin(admin.ModelAdmin):
+    list_display = ['id', 'abonent', 'dogowor', 'get_action_display', 'field_name', 'changed_by', 'ip_address', 'created_at']
+    
+    list_filter = ['action', 'field_name', 'created_at', 'changed_by']
+    
+    search_fields = ['abonent__username', 'abonent__email', 'dogowor__number', 'changed_by__username', 'ip_address', 'comment']
+    
+    readonly_fields = ['abonent', 'dogowor', 'changed_by', 'ip_address', 'action', 'field_name', 'old_value', 'new_value', 'comment', 'created_at']
+    
+    fields = ['abonent', 'dogowor', 'changed_by', 'ip_address', 'action', 'field_name', 'old_value', 'new_value', 'comment', 'created_at']
+    
+    date_hierarchy = 'created_at'
+
+    def get_action_display(self, obj):
+        return obj.get_action_display()
+    get_action_display.short_description = 'Действие'
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_superuser

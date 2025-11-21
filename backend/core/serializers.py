@@ -1,6 +1,6 @@
 # core/serializers.py
 from rest_framework import serializers
-from .models import Etrap, UserDogowor, UserTable, Service, UserService
+from .models import Etrap, UserDogowor, UserTable, Service, UserService, BalanceType
 
 class ServiceSerializer(serializers.ModelSerializer):
     class Meta:
@@ -37,3 +37,5 @@ class UserTableSerializer(serializers.ModelSerializer):
         fields = ['id', 'number', 'etrap', 'name', 'surname', 'patronymic',
                   'address', 'mobile_number', 'is_enterprises', 'account',
                   'hb_type', 'dogowors', 'abonplata', 'services']
+        
+        

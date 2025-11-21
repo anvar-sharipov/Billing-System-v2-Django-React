@@ -19,6 +19,8 @@ import AdminRoute from "./pages/Auth/AdminRoute";
 import { UserProvider } from "./pages/Auth/UserContext";
 import AddTestData from "./pages/Admin/addTestData/AddTestData";
 import { ServiceProvider } from "./context/ServiceContext";
+import AddDogowor from "./pages/Users/AddDogowor/AddDogowor";
+import Kassa from "./pages/Kassa/Kassa";
 
 function App() {
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
@@ -82,6 +84,26 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <AbonentForm />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    <Route
+                      // path="/users/:userId/dogowor/new"
+                      path={ROUTES.ADD_DOGOWOR}
+                      element={
+                        <ProtectedRoute>
+                          <AddDogowor /> {/* компонент для добавления нового договора */}
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    <Route
+                      // path="/users/:userId/dogowor/new"
+                      path={ROUTES.USER_KASSA}
+                      element={
+                        <ProtectedRoute>
+                          <Kassa /> {/* компонент для добавления нового договора */}
                         </ProtectedRoute>
                       }
                     />

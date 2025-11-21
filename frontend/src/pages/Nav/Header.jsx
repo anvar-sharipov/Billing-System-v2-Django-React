@@ -305,24 +305,26 @@ function Header({ theme, toggleTheme }) {
             </div>
 
             <div className="w-full space-y-3 text-center">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{t("User")}</p>
-                <p className="text-lg font-semibold text-gray-900 dark:text-white">{user.username}</p>
+              <div className="flex gap-3 justify-center">
+                <div>
+                  {/* <p className="text-sm text-gray-500 dark:text-gray-400">{t("User")}</p> */}
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white">{user.username}</p>
+                </div>
+
+                {user.last_name && (
+                  <div>
+                    {/* <p className="text-sm text-gray-500 dark:text-gray-400">{t("Last Name")}</p> */}
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white">{user.last_name}</p>
+                  </div>
+                )}
+
+                {user.first_name && (
+                  <div>
+                    {/* <p className="text-sm text-gray-500 dark:text-gray-400">{t("First Name")}</p> */}
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white">{user.first_name}</p>
+                  </div>
+                )}
               </div>
-
-              {user.last_name && (
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{t("Last Name")}</p>
-                  <p className="text-lg font-semibold text-gray-900 dark:text-white">{user.last_name}</p>
-                </div>
-              )}
-
-              {user.first_name && (
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{t("First Name")}</p>
-                  <p className="text-lg font-semibold text-gray-900 dark:text-white">{user.first_name}</p>
-                </div>
-              )}
 
               {userInfo?.groups && (
                 <div>

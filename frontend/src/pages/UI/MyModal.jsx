@@ -1,12 +1,13 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { createPortal } from "react-dom";
 
 export default function MyModal({ 
   isOpen, 
   onClose, 
   children, 
   title,
-  closeOnBackdropClick = true // по умолчанию true
+  closeOnBackdropClick = true
 }) {
   const handleBackdropClick = () => {
     if (closeOnBackdropClick) {
@@ -14,11 +15,12 @@ export default function MyModal({
     }
   };
 
-  return (
+  // Переносим весь модал в портал
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Фон - клик закрывает модалку (если разрешено) */}
+          {/* Фон */}
           <motion.div
             className="fixed inset-0 bg-black/50 z-40"
             initial={{ opacity: 0 }}
@@ -60,6 +62,7 @@ export default function MyModal({
           </div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body // рендерим прямо в body
   );
 }

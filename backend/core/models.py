@@ -1,7 +1,12 @@
 from django.db import models
 from decimal import Decimal
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import Q 
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
+
+
+
 
 
 
@@ -18,28 +23,6 @@ class Etrap(models.Model):
     def __str__(self):
         return f"{self.etrap} ({self.code})"
 
-
-# class UserTable(models.Model):
-#     TYPE_CHOICES = [("hoz", "Хозяйственный"), ("budjet", "Бюджетный")]
-
-#     number = models.CharField(max_length=8, verbose_name='Номер телефона')
-#     etrap = models.ForeignKey(Etrap, on_delete=models.PROTECT)
-#     name = models.CharField(max_length=500, verbose_name='Имя', blank=True)
-#     surname = models.CharField(max_length=500, verbose_name='Фамилия', blank=True)
-#     patronymic = models.CharField(max_length=500, verbose_name='Отчество', blank=True)
-#     address = models.CharField(max_length=500, verbose_name='Адрес', blank=True)
-#     mobile_number = models.CharField(max_length=32, verbose_name='Сотовый номер', blank=True)
-#     is_enterprises = models.BooleanField(default=False, verbose_name='Предприятия', blank=True)
-#     account = models.IntegerField(verbose_name='Счёт', blank=True, null=True)
-#     hb_type = models.CharField(max_length=6, choices=TYPE_CHOICES, verbose_name='Хоз/Бюджет', blank=True)
-
-#     class Meta:
-#         verbose_name = 'Абонент'
-#         verbose_name_plural = 'Абоненты'
-#         ordering = ['-number']
-
-#     def __str__(self):
-#         return f"{self.number} {self.etrap} ({self.get_hb_type_display()})"
 
 class UserTable(models.Model):
     TYPE_CHOICES = [
@@ -99,6 +82,8 @@ class UserDogowor(models.Model):
     activate_at = models.DateTimeField(verbose_name="Дата Подключения", null=True, blank=True)
     deactivate_at = models.DateTimeField(verbose_name="Дата Отключения", null=True, blank=True)
     comment = models.TextField(blank=True, verbose_name="Описание действия")
+    
+
     
 
     def __str__(self):
@@ -229,7 +214,7 @@ class UserService(models.Model):
     connected_by = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Кто подключил', on_delete=models.SET_NULL, null=True, blank=True, related_name='connected_services'
     )
     comment = models.TextField(verbose_name='Комментарий', blank=True)
-    date_connected = models.DateTimeField(verbose_name='Дата и время подключения', auto_now_add=True)
+    date_connected = models.DateTimeField(verbose_name='Дата и время подключения', null=True, blank=True)
     
     updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Кто изменил', on_delete=models.SET_NULL, null=True, blank=True,related_name='updated_services')
     
@@ -243,6 +228,55 @@ class UserService(models.Model):
 
     def __str__(self):
         return f"{self.user.number} - {self.service.service}"
+    
+    
+    
+
+# istoriya sozdaniya, udaleniya i izmeneniya abonenta
+class AbonentHistory(models.Model):
+    TYPE_CHOICES = [
+        ("installed", "installed"), 
+        ("updated", "updated"), 
+        ("deactivated", "deactivated"),
+        ("installed new IPTV dogowor", "installed new IPTV dogowor"), 
+        ]
+    
+    abonent = models.ForeignKey(UserTable, on_delete=models.CASCADE, related_name='history_abonent', verbose_name="Абонент")
+    dogowor = models.ForeignKey(UserDogowor, on_delete=models.CASCADE, related_name='history_dogowor', verbose_name="Договор", null=True, blank=True)
+    changed_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, verbose_name="Кем изменено")
+    ip_address = models.GenericIPAddressField(null=True, blank=True, verbose_name="IP адрес")
+    action = models.CharField(max_length=50, choices=TYPE_CHOICES, verbose_name="Действие")
+    field_name = models.CharField(max_length=100, blank=True, verbose_name="Измененное поле")
+    old_value = models.TextField(blank=True, null=True, verbose_name="Старое значение")
+    new_value = models.TextField(blank=True, null=True, verbose_name="Новое значение")
+    comment = models.TextField(blank=True, null=True, verbose_name="Комментарий")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
+    
+    
+    class Meta:
+        verbose_name = 'История изменений Абонента'
+        verbose_name_plural = 'Истории изменений Абонентов'
+        ordering = ['-created_at']
+    
+    # def get_action_display(self):
+    #     """Возвращает человеко-читаемое название действия"""
+    #     action_dict = dict(self.TYPE_CHOICES)
+    #     return action_dict.get(self.action, self.action)
+    
+    def get_action_display(self):
+        action_map = {
+            "installed": "installed",
+            "updated": "updated", 
+            "deactivated": "deactivated",
+        }
+        return action_map.get(self.action, self.action)
+    
+    def __str__(self):
+        return f"{self.abonent} - {self.get_action_display()} - {self.created_at}"
+        
+    
+    
+
 
 
 

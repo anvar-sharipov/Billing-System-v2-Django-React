@@ -3,6 +3,9 @@ from rest_framework.response import Response
 from django.db import transaction
 from datetime import datetime
 from .models import Etrap, UserTable, UserDogowor, DogoworBalance
+from django.db.models import IntegerField
+from django.db.models.functions import Cast
+from icecream import ic
 
 
 
@@ -152,3 +155,24 @@ def create_200_test_users(request):
             "success": False,
             "error": f"Error creating test users: {str(e)}"
         }, status=400)
+        
+        
+        
+        
+@api_view(['get'])
+def getLatesEmptyNumber4Stansion(request):
+    
+    user = (
+    UserTable.objects
+        .filter(dogowors__deactivate_at__isnull=True)
+        .annotate(num_int=Cast("number", IntegerField()))
+        .order_by("-num_int")
+        .first()
+)
+    
+    nextNumber = int(user.number) + 2
+    ic(nextNumber)
+    
+    return Response({
+            "nextNumber": nextNumber
+        }, status=201)

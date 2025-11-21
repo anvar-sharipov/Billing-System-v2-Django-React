@@ -116,8 +116,8 @@
   "Name is required": "Имя обязательно",
   "Surname is required": "Фамилия обязательна",
   
-  "Field number is required": "Поле number обязательно",
-  "Field name is required": "Поле name обязательно",
+  "Field number is required": "Поле номер обязательно",
+  "Field name is required": "Поле имя обязательно",
   "Field dogowor is required": "Поле dogowor обязательно",
   "Field etrap is required": "Поле etrap обязательно",
   "Number must contain only digits": "Номер должен содержать только цифры",
@@ -125,6 +125,7 @@
   "Abonent with this number already exists": "Абонент с таким номером уже существует",
   "Contract number must end with abonent number": "Номер договора должен заканчиваться на номер абонента",
   "Surname is required for individuals": "Для физических лиц обязательна фамилия",
+  "Name is required for individuals": "Имя обязательно",
   "Abonent created successfully": "Абонент успешно создан",
 
   "Cannot save - duplicate abonent found": "Невозможно сохранить - найден дубликат абонента",
@@ -174,6 +175,7 @@
   "account": "Счёт №",
   "enterAccount": "Введите № счёта",
   "Login3": "Login",
+  "Login4": "Логин",
   "searchResults": "Результаты поиска",
   "contractsBalance": "Баланс контрактов",
   "fullName": "Полное имя",
@@ -272,7 +274,93 @@
   "Enter reason for activation/deactivation...": "Укажите причину активации/деактивации...",
   "View mode only - no editing allowed": "Только просмотр - редактирование запрещено",
 
-  "abonplata": "Абонплата"
+  "abonplata": "Абонплата",
+
+  "Downloading...": "Скачивание...",
+  "downloadError": "Ошибка при скачивании",
+  "noSelectedUsers": "Нет выбранных пользователей",
+  "No download permission": "Нет прав для скачивания",
+
+  "selected": "выбрано",
+  "Enter login number": "Введите номер логина",
+  "Paste login number": "Вставьте номер логина",
+  "Login is required": "Логин обязателен",
+  "Login must end with the number": "Логин должен заканчиваться номером телефона",
+  "Login dont have etrap code": "Логин не имеет кода этрапа",
+  "Field login is required": "Поле 'Логин' обязательно для заполнения",
+  "Login already exsist": "Логин уже существует",
+  "Abonent with this login already exists": "Абонент с таким логином уже существует",
+  "No UserLogin matches the given query.": "Логин не найден.",
+  "Login cannot be empty": "Логин не может быть пустым",
+  "no services": "Нет услуг",
+  "services": "Услуги",
+
+  "Add new dogowor": "Добавить новый договор",
+  "Edit user": "Редактировать пользователя",
+
+
+  "Now": "Стало",
+  "Was": "Было",
+  "create": "создать",
+  "update": "обновить",
+  "delete": "удалить",
+
+  "created": "создано",
+  
+  "updated": "обновлено",
+
+  "installed": "установлено",
+  "dogowor": "договор",
+  "login": "логин",
+  "mobile number": "мобильный номер",
+  "is enterprises": "предприятие",
+  "added services": "добавленные услуги",
+  "deleted services": "удаленные услуги",
+  "service": "услуга",
+  "price": "цена",
+  "activate at": "активировано в",
+  "deactivate at": "деактивировано в",
+  "service comment": "комментарий к услуге",
+  "dogowor login": "договор логин",
+  "comment": "комментарий",
+  "nachisleniya": "начисления",
+  "Dogowor already exists": "Договор уже существует",
+  "hb type": "Хоз/Бюд",
+  "Field address is required": "Поле адрес обязательно для заполнения",
+  "nachisleniya service": "начисления услуг",
+  "nachisleniya abonplata": "начисления абонплаты",
+  "Choose dogowor Type": "Выберите тип договора",
+  "Back": "Назад",
+  "Install": "Установить",
+  "Number of points": "Количество точек",
+  "Monthly prices for points": "Ежемесячные начисления за точки",
+  "Monthly price for point": "Ежемесячноя начисление за точку",
+  "Installation Price": "Цена установки",
+
+
+  "Required": "Обязательно",
+  "Cannot be negative": "Не может быть отрицательным",
+  "Creating...": "Создание...",
+  "Use Ctrl+V to paste text": "Используйте Ctrl+V чтобы вставить текст",
+  "choose internet, alem tv or kabel TV": "Выберите интернет, Alem TV или кабельное ТВ",
+  "Dogowor must contain user number": "Договор должен содержать номер пользователя",
+  "Dogowor must contain 'ctv'": "Договор должен содержать 'ctv'",
+  "Login must contain 'ctv'": "Логин должен содержать 'ctv'",
+  "Login must contain user number": "Логин должен содержать номер пользователя",
+
+  "Dogowor must contain 'iptv'": "Договор должен содержать 'iptv'",
+  "Login must contain 'iptv'": "Логин должен содержать 'iptv'",
+  "installed new IPTV dogowor": "Установка нового договора IPTV",
+  "show history": "Показать историю абонента",
+  "pay_it": "Оплатить",
+  "cash": "Касса",
+  "Authentication required": "Требуется аутентификация",
+  "Access Denied": "Доступ запрещён",
+  "is_enterprises": "Предприятие",
+  "dogowors": "Договоры",
+  "deactiv": "Отключён"
+ 
+
 
 
 

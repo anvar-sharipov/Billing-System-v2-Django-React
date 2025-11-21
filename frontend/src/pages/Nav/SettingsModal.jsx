@@ -100,7 +100,7 @@ function SettingsModal({ isOpen, onClose }) {
         onClose();
         
         if (formData.image) {
-            console.log("formData.image", formData.image);
+            // console.log("formData.image", formData.image);
           URL.revokeObjectURL(imagePreview);
         }
       }

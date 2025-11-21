@@ -1,62 +1,87 @@
 import { useFormik } from "formik";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { User, Phone, FileText, Building, Activity, Hash, MapPin, X, ChevronDown, Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { memo, useEffect } from "react";
+import { memo, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
-// Выносим компоненты наружу и мемоизируем
-const SearchInput = memo(({ field, placeholder, icon: Icon, label, value, onChange, hidden = false }) => (
-  <div className={`relative mb-3 transition-opacity duration-200 ${hidden ? "opacity-0 invisible pointer-events-none h-0" : "opacity-100 visible"}`}>
-    <label htmlFor={field} className="block text-sm font-medium text-white dark:text-gray-200 mb-1">
-      {label}
-    </label>
-    <div className="relative">
-      <Icon size={16} className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
-      <input
-        id={field}
-        name={field}
-        type="text"
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        disabled={hidden}
-        className="w-full pl-10 pr-4 py-2 rounded-xl bg-white/10 dark:bg-gray-700 text-white dark:text-gray-100 placeholder-gray-300 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 transition-all duration-200 text-sm border border-white/20 dark:border-gray-600"
-      />
-    </div>
-  </div>
-));
+// Исправленный SearchInput
+const SearchInput = memo(({ field, placeholder, icon: Icon, label, value, onChange, hidden = false }) => {
+  if (hidden) return null; // Полностью убираем из DOM вместо скрытия через CSS
+  
+  return (
+    <motion.div 
+      className="relative mb-3"
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: "auto" }}
+      exit={{ opacity: 0, height: 0 }}
+      transition={{ duration: 0.2 }}
+    >
+      <label htmlFor={field} className="block text-sm font-medium text-white mb-1">
+        {label}
+      </label>
+      <div className="relative">
+        <Icon size={16} className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400 pointer-events-none" />
+        <input
+          id={field}
+          name={field}
+          type="text"
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          className="w-full pl-10 pr-4 py-2 rounded-xl bg-white/10 backdrop-blur-sm text-white placeholder-gray-400 
+                     focus:outline-none focus:ring-2 focus:ring-blue-400 
+                     transition-all duration-200 text-sm border border-white/20
+                     hover:bg-white/15"
+        />
+      </div>
+    </motion.div>
+  );
+});
 
 SearchInput.displayName = "SearchInput";
 
-const FilterSelect = memo(({ field, options, placeholder, icon: Icon, label, value, onChange, hidden = false }) => (
-  <div className={`relative mb-3 transition-opacity duration-200 ${hidden ? "opacity-0 invisible pointer-events-none h-0" : "opacity-100 visible"}`}>
-    <label htmlFor={field} className="block text-sm font-medium text-white dark:text-gray-200 mb-1">
-      {label}
-    </label>
-    <div className="relative">
-      <Icon size={14} className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400 dark:text-gray-500 z-10" />
-      <select
-        id={field}
-        name={field}
-        value={value}
-        onChange={onChange}
-        disabled={hidden}
-        className="w-full pl-10 pr-8 py-2 rounded-xl bg-white/10 dark:bg-gray-700 text-white dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-400 dark:focus:ring-purple-500 appearance-none cursor-pointer transition-all duration-200 text-sm border border-white/20 dark:border-gray-600 relative z-0 bg-gradient-to-b from-white/5 to-white/10"
-      >
-        <option value="" className="bg-gray-800 dark:bg-gray-700 text-white dark:text-gray-100">
-          {placeholder}
-        </option>
-        {options.map((option) => (
-          <option key={option.value} value={option.value} className="bg-gray-800 dark:bg-gray-700 text-white dark:text-gray-100">
-            {option.label}
+// Исправленный FilterSelect
+const FilterSelect = memo(({ field, options, placeholder, icon: Icon, label, value, onChange, hidden = false }) => {
+  if (hidden) return null; // Полностью убираем из DOM
+  
+  return (
+    <motion.div 
+      className="relative mb-3"
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: "auto" }}
+      exit={{ opacity: 0, height: 0 }}
+      transition={{ duration: 0.2 }}
+    >
+      <label htmlFor={field} className="block text-sm font-medium text-white mb-1">
+        {label}
+      </label>
+      <div className="relative">
+        <Icon size={14} className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400 pointer-events-none" />
+        <select
+          id={field}
+          name={field}
+          value={value}
+          onChange={onChange}
+          className="w-full pl-10 pr-8 py-2 rounded-xl bg-white/10 backdrop-blur-sm text-white 
+                     focus:outline-none focus:ring-2 focus:ring-purple-400 
+                     appearance-none cursor-pointer transition-all duration-200 text-sm 
+                     border border-white/20 hover:bg-white/15"
+        >
+          <option value="" className="bg-gray-800 text-white">
+            {placeholder}
           </option>
-        ))}
-      </select>
-      <ChevronDown size={16} className="absolute top-1/2 right-2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
-    </div>
-  </div>
-));
+          {options.map((option) => (
+            <option key={option.value} value={option.value} className="bg-gray-800 text-white">
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <ChevronDown size={16} className="absolute top-1/2 right-2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+      </div>
+    </motion.div>
+  );
+});
 
 FilterSelect.displayName = "FilterSelect";
 
@@ -65,144 +90,174 @@ const UsersFilter = ({ onSearch, onFilter, etraps }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Функция для получения значений из URL
-  const getInitialValuesFromURL = () => {
+  const getInitialValuesFromURL = useCallback(() => {
     const searchParams = new URLSearchParams(location.search);
     
     return {
       searchType: searchParams.get('searchType') || "users",
-      // Поиск поля
       surname: searchParams.get('surname') || "",
       name: searchParams.get('name') || "",
       patronymic: searchParams.get('patronymic') || "",
       phone: searchParams.get('phone') || "",
       dogowor: searchParams.get('dogowor') || "",
       address: searchParams.get('address') || "",
-      // Фильтры
       is_active: searchParams.get('is_active') || "",
       is_enterprises: searchParams.get('is_enterprises') || "",
       hb_type: searchParams.get('hb_type') || "",
       account: searchParams.get('account') || "",
       etrap: searchParams.get('etrap') || "",
     };
-  };
+  }, [location.search]);
 
   const formik = useFormik({
     initialValues: getInitialValuesFromURL(),
+    enableReinitialize: true,
     
     onSubmit: (values) => {
-      // Собираем только те поля, где есть значение
-      const params = new URLSearchParams();
-      Object.entries(values).forEach(([key, val]) => {
-        if (val !== "" && val !== null && val !== undefined) {
-          params.append(key, val);
-        }
-      });
-
-      // Сбрасываем пагинацию на первую страницу при новом поиске/фильтре
-      params.set('page', '1');
-
-      // Обновляем URL (но без перезагрузки страницы)
-      navigate(`?${params.toString()}`, { replace: true });
-
-      // при желании — можно оставить вызовы onFilter/onSearch
+      updateURLWithValues(values);
       if (onFilter) onFilter(values);
     },
   });
 
   const { values, handleSubmit, setFieldValue, resetForm } = formik;
 
-  // Синхронизация формы с URL при изменении location
+  const updateURLWithValues = useCallback((values) => {
+    const params = new URLSearchParams();
+    
+    Object.entries(values).forEach(([key, val]) => {
+      if (val !== "" && val !== null && val !== undefined) {
+        params.append(key, val);
+      }
+    });
+
+    params.set('page', '1');
+    navigate(`?${params.toString()}`, { replace: true });
+  }, [navigate]);
+
   useEffect(() => {
     const urlValues = getInitialValuesFromURL();
     
-    // Обновляем все поля формы значениями из URL
-    Object.entries(urlValues).forEach(([key, value]) => {
-      if (formik.values[key] !== value) {
-        setFieldValue(key, value);
-      }
-    });
-  }, [location.search]);
+    const hasChanges = Object.keys(urlValues).some(key => 
+      formik.values[key] !== urlValues[key]
+    );
 
-  const handleSelectChange = (field, value) => {
+    if (hasChanges) {
+      formik.setValues(urlValues);
+    }
+  }, [location.search, getInitialValuesFromURL]);
+
+  const handleSelectChange = useCallback((field, value) => {
     setFieldValue(field, value);
 
+    const updatedValues = { ...values, [field]: value };
     const params = new URLSearchParams(window.location.search);
 
-    // --- Логика для типа абонента ---
     if (field === "is_enterprises") {
       if (value === "true") {
-        setFieldValue("surname", "");
-        setFieldValue("patronymic", "");
+        updatedValues.surname = "";
+        updatedValues.patronymic = "";
         params.delete("surname");
         params.delete("patronymic");
       } else if (value === "false") {
-        setFieldValue("account", "");
-        setFieldValue("hb_type", "");
+        updatedValues.account = "";
+        updatedValues.hb_type = "";
         params.delete("account");
         params.delete("hb_type");
       }
     }
 
-    // --- Логика для searchType ---
     if (field === "searchType") {
       if (value === "users") {
-        setFieldValue("dogowor", "");
-        setFieldValue("phone", "");
+        updatedValues.dogowor = "";
+        updatedValues.phone = "";
+        updatedValues.address = "";
         params.delete("dogowor");
         params.delete("phone");
+        params.delete("address");
       } else if (value === "phone") {
-        setFieldValue("surname", "");
-        setFieldValue("name", "");
-        setFieldValue("patronymic", "");
-        setFieldValue("dogowor", "");
+        updatedValues.surname = "";
+        updatedValues.name = "";
+        updatedValues.patronymic = "";
+        updatedValues.dogowor = "";
+        updatedValues.address = "";
         params.delete("surname");
         params.delete("name");
         params.delete("patronymic");
         params.delete("dogowor");
+        params.delete("address");
       } else if (value === "dogowor") {
-        setFieldValue("surname", "");
-        setFieldValue("name", "");
-        setFieldValue("patronymic", "");
-        setFieldValue("phone", "");
+        updatedValues.surname = "";
+        updatedValues.name = "";
+        updatedValues.patronymic = "";
+        updatedValues.phone = "";
+        updatedValues.address = "";
         params.delete("surname");
         params.delete("name");
         params.delete("patronymic");
         params.delete("phone");
+        params.delete("address");
       } else if (value === "address") {
-        setFieldValue("surname", "");
-        setFieldValue("name", "");
-        setFieldValue("patronymic", "");
-        setFieldValue("phone", "");
+        updatedValues.surname = "";
+        updatedValues.name = "";
+        updatedValues.patronymic = "";
+        updatedValues.phone = "";
+        updatedValues.dogowor = "";
         params.delete("surname");
         params.delete("name");
         params.delete("patronymic");
         params.delete("phone");
+        params.delete("dogowor");
       }
     }
 
-    // Сбрасываем страницу на 1 при изменении фильтра и обновляем URL без перезагрузки
-    params.set('page', '1');
-    window.history.replaceState({}, "", `${window.location.pathname}?${params.toString()}`);
-  };
+    Object.entries(updatedValues).forEach(([key, val]) => {
+      if (formik.values[key] !== val) {
+        setFieldValue(key, val);
+      }
+    });
 
-  const clearAllFilters = () => {
-    resetForm();
-    // Очистить параметры из URL, не обновляя страницу
-    const url = window.location.origin + window.location.pathname;
-    window.history.replaceState({}, "", url);
-    if (onFilter) onFilter({});
-  };
+    // updateURLWithValues(updatedValues);
+  }, [values, setFieldValue, updateURLWithValues]);
+
+  const clearAllFilters = useCallback(() => {
+    const defaultValues = {
+      searchType: "users",
+      surname: "",
+      name: "",
+      patronymic: "",
+      phone: "",
+      dogowor: "",
+      address: "",
+      is_active: "",
+      is_enterprises: "",
+      hb_type: "",
+      account: "",
+      etrap: "",
+    };
+    
+    resetForm({ values: defaultValues });
+    const url = window.location.pathname;
+    navigate(url, { replace: true });
+    
+    if (onFilter) onFilter(defaultValues);
+  }, [resetForm, navigate, onFilter]);
 
   const showEnterpriseFields = values.is_enterprises === "true";
 
+  const hasActiveFilters = Object.entries(values).some(
+    ([key, value]) => key !== "searchType" && value !== "" && value !== null
+  );
+
   return (
     <div className="space-y-4">
-      {/* Кнопка Gözle сверху */}
+      {/* Кнопка поиска */}
       <motion.button
         type="button"
         onClick={handleSubmit}
-        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-indigo-800 shadow-lg hover:shadow-xl"
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 
+                   bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium 
+                   transition-all duration-200 shadow-lg hover:shadow-xl
+                   focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
       >
@@ -210,132 +265,145 @@ const UsersFilter = ({ onSearch, onFilter, etraps }) => {
         {t("search")}
       </motion.button>
 
-      <h3 className="text-lg font-semibold mb-4 text-white dark:text-gray-100">{t("filters")}</h3>
+      <h3 className="text-lg font-semibold mb-4 text-white">{t("filters")}</h3>
 
-      {/* Görnüşi gözleg */}
+      {/* Тип поиска */}
       <div className="relative mb-4">
-        <label htmlFor="searchType" className="block text-sm font-medium text-white dark:text-gray-200 mb-1">
+        <label htmlFor="searchType" className="block text-sm font-medium text-white mb-1">
           {t("searchType")}
         </label>
         <div className="relative">
-          <User size={14} className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400 dark:text-gray-500 z-10" />
+          <User size={14} className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400 pointer-events-none" />
           <select
             id="searchType"
             name="searchType"
             value={values.searchType}
             onChange={(e) => handleSelectChange("searchType", e.target.value)}
-            className="w-full pl-10 pr-8 py-2 rounded-xl bg-white/10 dark:bg-gray-700 text-white dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 appearance-none cursor-pointer transition-all duration-200 text-sm border border-white/20 dark:border-gray-600 relative z-0 bg-gradient-to-b from-white/5 to-white/10"
+            className="w-full pl-10 pr-8 py-2 rounded-xl bg-white/10 backdrop-blur-sm text-white 
+                       focus:outline-none focus:ring-2 focus:ring-blue-400 
+                       appearance-none cursor-pointer transition-all duration-200 text-sm 
+                       border border-white/20 hover:bg-white/15"
           >
-            <option value="users" className="bg-gray-800 dark:bg-gray-700 text-white dark:text-gray-100">
-              {t("people")}
-            </option>
-            <option value="phone" className="bg-gray-800 dark:bg-gray-700 text-white dark:text-gray-100">
-              {t("phone")}
-            </option>
-            <option value="dogowor" className="bg-gray-800 dark:bg-gray-700 text-white dark:text-gray-100">
-              {t("contract")}
-            </option>
-            <option value="address" className="bg-gray-800 dark:bg-gray-700 text-white dark:text-gray-100">
-              {t("address")}
-            </option>
+            <option value="users" className="bg-gray-800 text-white">{t("people")}</option>
+            <option value="phone" className="bg-gray-800 text-white">{t("phone")}</option>
+            <option value="dogowor" className="bg-gray-800 text-white">{t("contract")}</option>
+            <option value="address" className="bg-gray-800 text-white">{t("address")}</option>
           </select>
-          <ChevronDown size={16} className="absolute top-1/2 right-2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
+          <ChevronDown size={16} className="absolute top-1/2 right-2 -translate-y-1/2 text-gray-400 pointer-events-none" />
         </div>
       </div>
 
-      {/* Gözleg meýdanlary - ПОЛНОСТЬЮ ФИКСИРОВАННАЯ СТРУКТУРА */}
-      <div className="mb-4">
-        {/* СЛОТ 1: Фамилия ИЛИ Хоз/Бюджет */}
-        <SearchInput
-          field="surname"
-          placeholder={t("enterSurname")}
-          icon={User}
-          label={t("surname")}
-          value={values.surname}
-          onChange={(e) => setFieldValue("surname", e.target.value)}
-          hidden={values.searchType !== "users" || showEnterpriseFields}
-        />
-        <FilterSelect
-          field="hb_type"
-          options={[
-            { value: "hoz", label: t("economic") },
-            { value: "budjet", label: t("budget") },
-          ]}
-          placeholder={t("selectType")}
-          icon={Hash}
-          label={t("economicBudget")}
-          value={values.hb_type}
-          onChange={(e) => handleSelectChange("hb_type", e.target.value)}
-          hidden={values.searchType !== "users" || !showEnterpriseFields}
-        />
+      {/* Поля поиска с AnimatePresence для плавной анимации */}
+      <AnimatePresence mode="wait">
+        <div className="mb-4">
+          {/* Фамилия / Хоз-Бюджет */}
+          {values.searchType === "users" && !showEnterpriseFields && (
+            <SearchInput
+              key="surname"
+              field="surname"
+              placeholder={t("enterSurname")}
+              icon={User}
+              label={t("surname")}
+              value={values.surname}
+              onChange={(e) => setFieldValue("surname", e.target.value)}
+            />
+          )}
+          {values.searchType === "users" && showEnterpriseFields && (
+            <FilterSelect
+              key="hb_type"
+              field="hb_type"
+              options={[
+                { value: "hoz", label: t("economic") },
+                { value: "budjet", label: t("budget") },
+              ]}
+              placeholder={t("selectType")}
+              icon={Hash}
+              label={t("economicBudget")}
+              value={values.hb_type}
+              onChange={(e) => handleSelectChange("hb_type", e.target.value)}
+            />
+          )}
 
-        {/* СЛОТ 2: Имя (всегда на этом месте) */}
-        <SearchInput
-          field="name"
-          placeholder={t("enterName")}
-          icon={User}
-          label={t("name")}
-          value={values.name}
-          onChange={(e) => setFieldValue("name", e.target.value)}
-          hidden={values.searchType !== "users"}
-        />
+          {/* Имя */}
+          {values.searchType === "users" && (
+            <SearchInput
+              key="name"
+              field="name"
+              placeholder={t("enterName")}
+              icon={User}
+              label={t("name")}
+              value={values.name}
+              onChange={(e) => setFieldValue("name", e.target.value)}
+            />
+          )}
 
-        {/* СЛОТ 3: Отчество ИЛИ Счет */}
-        <SearchInput
-          field="patronymic"
-          placeholder={t("enterPatronymic")}
-          icon={User}
-          label={t("patronymic")}
-          value={values.patronymic}
-          onChange={(e) => setFieldValue("patronymic", e.target.value)}
-          hidden={values.searchType !== "users" || showEnterpriseFields}
-        />
-        <SearchInput
-          field="account"
-          placeholder={t("enterAccount")}
-          icon={Hash}
-          label={t("account")}
-          value={values.account}
-          onChange={(e) => setFieldValue("account", e.target.value)}
-          hidden={values.searchType !== "users" || !showEnterpriseFields}
-        />
+          {/* Отчество / Счет */}
+          {values.searchType === "users" && !showEnterpriseFields && (
+            <SearchInput
+              key="patronymic"
+              field="patronymic"
+              placeholder={t("enterPatronymic")}
+              icon={User}
+              label={t("patronymic")}
+              value={values.patronymic}
+              onChange={(e) => setFieldValue("patronymic", e.target.value)}
+            />
+          )}
+          {values.searchType === "users" && showEnterpriseFields && (
+            <SearchInput
+              key="account"
+              field="account"
+              placeholder={t("enterAccount")}
+              icon={Hash}
+              label={t("account")}
+              value={values.account}
+              onChange={(e) => setFieldValue("account", e.target.value)}
+            />
+          )}
 
-        {/* СЛОТ 4: Телефон */}
-        <SearchInput
-          field="phone"
-          placeholder={t("enterPhone")}
-          icon={Phone}
-          label={t("phoneNumber")}
-          value={values.phone}
-          onChange={(e) => setFieldValue("phone", e.target.value)}
-          hidden={values.searchType !== "phone"}
-        />
+          {/* Телефон */}
+          {values.searchType === "phone" && (
+            <SearchInput
+              key="phone"
+              field="phone"
+              placeholder={t("enterPhone")}
+              icon={Phone}
+              label={t("phoneNumber")}
+              value={values.phone}
+              onChange={(e) => setFieldValue("phone", e.target.value)}
+            />
+          )}
 
-        {/* СЛОТ 5: Договор */}
-        <SearchInput
-          field="dogowor"
-          placeholder={t("enterContract")}
-          icon={FileText}
-          label={t("contractNumber")}
-          value={values.dogowor}
-          onChange={(e) => setFieldValue("dogowor", e.target.value)}
-          hidden={values.searchType !== "dogowor"}
-        />
-        {/* СЛОТ 5: Address */}
-        <SearchInput
-          field="address"
-          placeholder={t("enterAddress")}
-          icon={MapPin}
-          label={t("Address")}
-          value={values.address}
-          onChange={(e) => setFieldValue("address", e.target.value)}
-          hidden={values.searchType !== "address"}
-        />
-      </div>
+          {/* Договор */}
+          {values.searchType === "dogowor" && (
+            <SearchInput
+              key="dogowor"
+              field="dogowor"
+              placeholder={t("enterContract")}
+              icon={FileText}
+              label={t("contractNumber")}
+              value={values.dogowor}
+              onChange={(e) => setFieldValue("dogowor", e.target.value)}
+            />
+          )}
+          
+          {/* Адрес */}
+          {values.searchType === "address" && (
+            <SearchInput
+              key="address"
+              field="address"
+              placeholder={t("enterAddress")}
+              icon={MapPin}
+              label={t("Address")}
+              value={values.address}
+              onChange={(e) => setFieldValue("address", e.target.value)}
+            />
+          )}
+        </div>
+      </AnimatePresence>
 
-      {/* Esasy filterler - FIXED STRUCTURE */}
-      <div className="space-y-2 pt-4 border-t border-white/20 dark:border-gray-600">
-        {/* Statusy */}
+      {/* Основные фильтры */}
+      <div className="space-y-2 pt-4 border-t border-white/20">
         <FilterSelect
           field="is_active"
           options={[
@@ -349,7 +417,6 @@ const UsersFilter = ({ onSearch, onFilter, etraps }) => {
           onChange={(e) => handleSelectChange("is_active", e.target.value)}
         />
 
-        {/* Abonent görnüşi */}
         <FilterSelect
           field="is_enterprises"
           options={[
@@ -363,7 +430,6 @@ const UsersFilter = ({ onSearch, onFilter, etraps }) => {
           onChange={(e) => handleSelectChange("is_enterprises", e.target.value)}
         />
 
-        {/* Etrap - hemişe görünýär */}
         <FilterSelect
           field="etrap"
           options={
@@ -380,19 +446,24 @@ const UsersFilter = ({ onSearch, onFilter, etraps }) => {
         />
       </div>
 
-      {/* Arassala düwmesi */}
-      {Object.values(values).some((val, key) => key !== "searchType" && val !== "") && (
-        <motion.button
-          type="button"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          onClick={clearAllFilters}
-          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-300 dark:text-red-400 hover:text-red-200 dark:hover:text-red-300 bg-white/5 dark:bg-gray-700 rounded-lg transition-colors duration-200 mt-4 border border-white/10 dark:border-gray-600"
-        >
-          <X size={14} />
-          {t("resetFilters")}
-        </motion.button>
-      )}
+      {/* Кнопка сброса */}
+      <AnimatePresence>
+        {hasActiveFilters && (
+          <motion.button
+            type="button"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            onClick={clearAllFilters}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm 
+                       text-red-300 hover:text-red-200 bg-white/5 hover:bg-white/10 
+                       rounded-lg transition-all duration-200 mt-4 border border-white/10"
+          >
+            <X size={14} />
+            {t("resetFilters")}
+          </motion.button>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

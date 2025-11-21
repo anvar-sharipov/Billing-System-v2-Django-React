@@ -21,7 +21,7 @@ export const useWebSocket = (roomId = null) => {
     wsRef.current = new WebSocket(wsUrl);
 
     wsRef.current.onopen = () => {
-      console.log('WebSocket connected');
+      // console.log('WebSocket connected');
       setIsConnected(true);
     };
 
@@ -50,7 +50,7 @@ export const useWebSocket = (roomId = null) => {
     };
 
     wsRef.current.onclose = () => {
-      console.log('WebSocket disconnected');
+      // console.log('WebSocket disconnected');
       setIsConnected(false);
 
       // Переподключение через 3 секунды

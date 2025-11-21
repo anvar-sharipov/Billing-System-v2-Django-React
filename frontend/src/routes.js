@@ -9,4 +9,9 @@ export const ROUTES = {
   ADMIN: "/admin",
   ADD_USERS_FROM_BILLING: "/admin/add-users-from-billing",
   ADD_TEST_DATA: "/admin/add-test-data",
+
+  ADD_DOGOWOR: "/users/:userId/dogowor/new",
+
+  USER_KASSA: "/user-cash/:userId",
+
 };

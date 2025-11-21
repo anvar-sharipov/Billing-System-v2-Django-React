@@ -12,12 +12,14 @@ import myAxios from "../../../services/myAxios";
 import { useNotifications } from "../../../components/Notifications";
 import UniqueAbonentChecker from "./UniqueAbonentChecker";
 import UniqueDogoworChecker from "./UniqueDogoworChecker";
+import UniqueLoginChecker from "./UniqueLoginChecker";
 import { useLocation } from "react-router-dom";
 import FastFillDefaultFields from "./Test/FastFillDefaultFields";
 import { UserContext } from "../../Auth/UserContext";
 
 // Функция для расчета общей суммы выбранных услуг
 const calculateTotalPrice = (selectedServices, allServices) => {
+  
   if (!selectedServices || !allServices) return 0;
   return selectedServices
     .reduce((total, serviceId) => {
@@ -37,14 +39,14 @@ const calculateGrandTotal = (values, servicesData) => {
 };
 
 // Компонент для кнопки Save с доступом к Formik контексту
-const SaveButton = ({ loadingSave, setLoadingSave, hasDuplicate, hasDuplicateDogowor, disabled }) => {
+const SaveButton = ({ loadingSave, setLoadingSave, hasDuplicate, hasDuplicateDogowor, hasDuplicateLogin, disabled }) => {
   const { submitForm, validateForm, setTouched } = useFormikContext();
   const { t } = useTranslation();
   const { notificationError } = useNotifications();
 
   const handleSave = async () => {
     // Помечаем ВСЕ поля как touched чтобы показать все ошибки
-    const allFields = ["number", "mobile_number", "surname", "name", "patronymic", "address", "etrap", "dogowor", "account", "hb_type", "activate_at", "abonplata"];
+    const allFields = ["number", "mobile_number", "surname", "name", "patronymic", "address", "etrap", "dogowor", "login", "account", "hb_type", "activate_at", "abonplata"];
 
     if (hasDuplicate) {
       notificationError(t("Cannot save - duplicate abonent found"), t("Error"));
@@ -53,6 +55,11 @@ const SaveButton = ({ loadingSave, setLoadingSave, hasDuplicate, hasDuplicateDog
 
     if (hasDuplicateDogowor) {
       notificationError(t("Cannot save - duplicate dogowor found"), t("Error"));
+      return;
+    }
+
+    if (hasDuplicateLogin) {
+      notificationError(t("Cannot save - duplicate login found"), t("Error"));
       return;
     }
 
@@ -90,7 +97,7 @@ const SaveButton = ({ loadingSave, setLoadingSave, hasDuplicate, hasDuplicateDog
       iconActive={<Loader2 size={20} />}
       loading={loadingSave}
       onClick={handleSave}
-      disabled={hasDuplicate || hasDuplicateDogowor || disabled}
+      disabled={hasDuplicate || hasDuplicateDogowor || hasDuplicateLogin || disabled}
     />
   );
 };
@@ -288,11 +295,9 @@ const AbonentForm = () => {
   const isViewer = userGroups?.includes("viewer");
   const isFormDisabled = isViewer;
 
-
   // console.log("userGroups", userGroups);
   // const canUpdateAkdepe = userInfo?.groups?.includes("admin");
-  console.log("userGroups", userGroups);
-  console.log("isFormDisabled", isFormDisabled);
+
 
   const [initialValues, setInitialValues] = useState({
     user_id: null,
@@ -308,6 +313,7 @@ const AbonentForm = () => {
     hb_type: "",
     dogowor_id: null,
     dogowor: "",
+    login: "",
     comment: "",
     activate_at: "",
     deactivate_at: "",
@@ -335,8 +341,9 @@ const AbonentForm = () => {
           params: { dogoworId: dogoworId },
         });
         const { user, dogowor } = res.data;
-
         console.log("user", user);
+        
+
 
         // Форматируем даты услуг из существующих данных
         const formattedServiceDates = {};
@@ -351,7 +358,6 @@ const AbonentForm = () => {
           });
         }
 
-        console.log("formattedServiceDates", formattedServiceDates);
 
         setExistingServiceDates(formattedServiceDates);
 
@@ -369,6 +375,7 @@ const AbonentForm = () => {
           hb_type: user.hb_type || "",
           dogowor_id: dogowor.id || null,
           dogowor: dogowor.dogowor || "",
+          login: dogowor.login || "",
           comment: dogowor.comment || "",
           activate_at: dogowor.activate_at ? new Date(dogowor.activate_at).toISOString().slice(0, 16) : "",
           deactivate_at: dogowor.deactivate_at ? new Date(dogowor.deactivate_at).toISOString().slice(0, 16) : "",
@@ -394,6 +401,7 @@ const AbonentForm = () => {
   const { etraps, loading } = useEtraps();
   const [hasDuplicate, setHasDuplicate] = useState(false);
   const [hasDuplicateDogowor, setHasDuplicateDogowor] = useState(false);
+  const [hasDuplicateLogin, setHasDuplicateLogin] = useState(false);
 
   const filtered_etraps = isAdmin ? etraps : etraps.filter((e) => userGroups.includes(e.etrap)).map((e) => ({ id: e.id, etrap: e.etrap, code: e.code }));
 
@@ -413,6 +421,19 @@ const AbonentForm = () => {
         return value.includes(String(number));
       })
       .test("dogowor-code-match", t("Dogowor dont have etrap code"), function (value) {
+        const { etrap } = this.parent;
+        if (etrap) {
+          const choosed_etrap = etraps.find((e) => parseFloat(e.id) === parseFloat(etrap));
+          return String(value).includes(String(choosed_etrap.code));
+        }
+      }),
+    login: Yup.string()
+      .required(t("Login is required"))
+      .test("login-match", t("Login must end with the number"), function (value) {
+        const { number } = this.parent;
+        return value.includes(String(number));
+      })
+      .test("login-code-match", t("login dont have etrap code"), function (value) {
         const { etrap } = this.parent;
         if (etrap) {
           const choosed_etrap = etraps.find((e) => parseFloat(e.id) === parseFloat(etrap));
@@ -488,6 +509,12 @@ const AbonentForm = () => {
                 return;
               }
 
+              if (hasDuplicateLogin) {
+                notificationError(t("Abonent with this login already exists"), t("Cannot create abonent"));
+                setSubmitting(false);
+                return;
+              }
+
               // Подготавливаем данные для отправки
               const submitData = {
                 ...values,
@@ -519,6 +546,7 @@ const AbonentForm = () => {
               <>
                 <UniqueAbonentChecker values={values} setHasDuplicate={setHasDuplicate} editedUserId={values.user_id} />
                 <UniqueDogoworChecker values={values} setHasDuplicateDogowor={setHasDuplicateDogowor} editedDogoworId={values.dogowor_id} />
+                <UniqueLoginChecker values={values} setHasDuplicateLogin={setHasDuplicateLogin} editedLoginId={values.dogowor_id} />
 
                 <div className="flex items-center justify-between mb-4">
                   <motion.div initial={{ scale: 0, rotate: -180 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 200, damping: 15 }}>
@@ -539,7 +567,7 @@ const AbonentForm = () => {
                         navigate(-1);
                       }}
                     />
-                    <SaveButton loadingSave={loadingSave} setLoadingSave={setLoadingSave} hasDuplicate={hasDuplicate} hasDuplicateDogowor={hasDuplicateDogowor} disabled={isFormDisabled} />
+                    <SaveButton loadingSave={loadingSave} setLoadingSave={setLoadingSave} hasDuplicate={hasDuplicate} hasDuplicateDogowor={hasDuplicateDogowor} hasDuplicateLogin={hasDuplicateLogin} disabled={isFormDisabled} />
                     {isAdmin && <FastFillDefaultFields setFieldValue={setFieldValue} values={values} />}
                   </div>
                 </div>
@@ -842,6 +870,39 @@ const AbonentForm = () => {
                         </div>
                       </div>
 
+                      {/* Login - обязательное поле */}
+                      <div className="flex items-center gap-4">
+                        <label className={`${labelClass} flex items-center gap-2`}>
+                          {t("Login3")} *
+                          <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                            <Copy className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                            <span className="text-xs text-blue-600 dark:text-blue-400">Ctrl+V</span>
+                          </div>
+                        </label>
+                        <div className="flex-1">
+                          <ClearableField
+                            name="login"
+                            placeholder={t("Paste login number")}
+                            setFieldValue={setFieldValue}
+                            handlePaste={handlePaste}
+                            handleKeyDown={handleKeyDown}
+                            className={`${pasteFieldClass} ${errors.login && touched.login ? "border-red-500 focus:ring-red-500" : ""} ${hasDuplicateLogin ? "border-red-500" : ""} ${
+                              isFormDisabled ? "bg-gray-100 dark:bg-gray-600 cursor-not-allowed opacity-60" : ""
+                            }`}
+                            values={values}
+                            isAdmin={isAdmin}
+                            disabled={isFormDisabled}
+                          />
+                          {errors.login && touched.login && <div className="text-red-500 text-xs mt-1">{errors.login}</div>}
+                          {hasDuplicateLogin && !errors.login && (
+                            <div className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                              <X className="w-3 h-3" />
+                              {t("Abonent with this login already exists")}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Activate At */}
                         <div className="flex items-center gap-4">
@@ -964,9 +1025,9 @@ const AbonentForm = () => {
                             step="0.01"
                             placeholder={t("Enter abonplata amount")}
                             autoComplete="off"
-                            disabled={isFormDisabled} // Добавить
+                            disabled={isFormDisabled || values.user_id && !isAdmin} // Добавить
                             className={`${formClass} ${errors.abonplata && touched.abonplata ? "border-red-500 focus:ring-red-500" : ""} ${
-                              isFormDisabled ? "bg-gray-100 dark:bg-gray-600 cursor-not-allowed opacity-60" : ""
+                              isFormDisabled || values.user_id && !isAdmin ? "bg-gray-100 dark:bg-gray-600 cursor-not-allowed opacity-60" : ""
                             }`}
                           />
                           {errors.abonplata && touched.abonplata && <div className="text-red-500 text-xs mt-1">{errors.abonplata}</div>}

@@ -25,6 +25,18 @@ from django.utils.timezone import make_aware
 from .views import get_group_list
 
 
+from django.http import HttpResponse
+from django.db.models import Q
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment
+import io
+from django.db.models import Subquery, OuterRef
+from django.db.models import Count
+
+
+current_year = datetime.now().year
+
+
 
 @api_view(['GET'])
 def checkActiveOrNot(request):
@@ -45,13 +57,13 @@ def checkActiveOrNot(request):
             deactivate_at_datetime = datetime.fromisoformat(deactivate_at)
             
         
-        ic(activate_at_datetime)
-        ic(deactivate_at_datetime)
+        # ic(activate_at_datetime)
+        # ic(deactivate_at_datetime)
         
         
         user_id = request.GET.get('id')
 
-        ic("Received parameters:", number, etrap)
+        # ic("Received parameters:", number, etrap)
         
         # Валидация обязательных параметров
         if not number:
@@ -143,8 +155,49 @@ def checkUniqueDogowor(request):
             "error": str(e)
         }, status=500)
         
-        
 
+@api_view(['GET'])        
+def checkUniqueLogin(request):
+    ic("checkUniqueLogin")
+    try:
+        # Получаем параметры из query string
+        login = request.GET.get('login')
+        login_type = request.GET.get('login_type')
+        login_id = request.GET.get('id')
+        
+        
+        # Валидация обязательных параметров
+        if not login:
+            return Response({
+                "success": False,
+                "error": "Login parameter is required"
+            }, status=400)
+            
+            
+        qs = UserDogowor.objects.filter(login=login, balance_type=login_type)
+        
+        if login_id:
+            qs = qs.exclude(id=login_id)
+
+        login_exists = qs.exists()
+        
+        
+        # dogowor_exists = UserDogowor.objects.filter(dogowor=dogowor, balance_type=dogowor_type).exists()
+        # ic(dogowor_exists)
+        return Response({
+            "success": True,
+            "exists": login_exists,
+            "message": "Check completed successfully"
+        })
+        
+    except Exception as e:
+        ic("Error in checkUniqueLogin:", str(e))
+        return Response({
+            "success": False,
+            "error": str(e)
+        }, status=500)
+        
+        
 
 @api_view(['GET'])
 def get_filtered_users(request):
@@ -161,18 +214,15 @@ def get_filtered_users(request):
     phone = request.GET.get('phone', '')
     dogowor = request.GET.get('dogowor', '')
     address = request.GET.get('address', '')
-    # abonplata = request.GET.get('abonplata', '')
-    # services = request.GET.get('services', '')
     
-    ic(is_active)
-    
-    # UserTable.objects.all().delete()
-    # UserDogowor.objects.all().delete()
+    # Параметры сортировки
+    sort_field = request.GET.get('sort', '')
+    sort_order = request.GET.get('order', 'asc')
     
     # Параметры пагинации
     page = request.GET.get('page', 1)
-    page_size = request.GET.get('page_size', 10)  # По умолчанию 20 записей на странице
-    
+    page_size = request.GET.get('page_size', 10)
+
     try:
         page = int(page)
         page_size = int(page_size)
@@ -184,16 +234,12 @@ def get_filtered_users(request):
 
     # Фильтруем по is_active
     if is_active == 'true':
-        # Активные
-        ic("tut")
         qs = qs.filter(
             dogowors__activate_at__isnull=False,
             dogowors__deactivate_at__isnull=True,
             dogowors__balance_type="telefon"
         ).distinct()
-        ic(qs)
     elif is_active == 'false':
-        # Неактивные (имеют отключенные телефонные договоры)
         qs = qs.filter(
             dogowors__deactivate_at__isnull=False,
             dogowors__balance_type="telefon"
@@ -241,6 +287,52 @@ def get_filtered_users(request):
     if hb_type:
         qs = qs.filter(hb_type=hb_type)
 
+    # Применяем сортировку
+    if sort_field:
+        # Исправленный маппинг полей фронтенда на поля модели
+        field_mapping = {
+            'fullName': 'surname',  # Сортируем по фамилии для полного имени
+            'number': 'number',
+            'login': 'dogowors__login',
+            'phone': 'mobile_number',
+            'type': 'is_enterprises',
+            'hbType': 'hb_type',
+            'account': 'account',
+            'etrap': 'etrap__etrap',  # ИСПРАВЛЕНО: используем поле 'etrap' вместо 'name'
+            'address': 'address',
+            'abonplata': 'abonplata',
+            'id': 'id',
+            'services_count': 'services_count',
+            'services': 'services_count',
+        }
+        
+        db_field = field_mapping.get(sort_field)
+        if db_field:
+            if sort_field in ['services', 'services_count']:
+                ic("tut services_count")
+                # qs = qs.annotate(services_count=Count('userservice', distinct=True))
+                qs = qs.annotate(services_count=Count('userservice', filter=models.Q(userservice__is_active=True), distinct=True))
+                
+            if sort_order == 'desc':
+                db_field = f'-{db_field}'
+            
+            # Для сложных полей (отношения) используем аннотацию
+            if sort_field == 'login':
+                # Аннотируем queryset первым логином из договоров
+                qs = qs.annotate(
+                    first_login=Subquery(
+                        UserDogowor.objects.filter(
+                            user_id=OuterRef('id'),
+                            login__isnull=False
+                        ).order_by('id').values('login')[:1]
+                    )
+                ).order_by(db_field.replace('dogowors__login', 'first_login'))
+            else:
+                qs = qs.order_by(db_field)
+    else:
+        # Сортировка по умолчанию
+        qs = qs.order_by('surname', 'name')
+
     # Применяем distinct() и подсчитываем общее количество записей
     qs = qs.distinct()
     total_count = qs.count()
@@ -251,8 +343,9 @@ def get_filtered_users(request):
     try:
         paginated_qs = paginator.page(page)
     except EmptyPage:
-        # Если страница пустая, возвращаем последнюю страницу
         paginated_qs = paginator.page(paginator.num_pages)
+        
+    
 
     # Сериализация
     results = []
@@ -270,6 +363,13 @@ def get_filtered_users(request):
                 "activate_at": d.activate_at,
                 "deactivate_at": d.deactivate_at,
             })
+            
+        services_obj = UserService.objects.filter(user=user)
+        services = []
+        if services_obj.exists():
+            for service in services_obj:
+                if service.is_active:
+                    services.append({"service": service.service.service, "price": service.actual_price})
 
         results.append({
             "id": user.id,
@@ -278,7 +378,6 @@ def get_filtered_users(request):
             "name": user.name,
             "patronymic": user.patronymic,
             "phone": user.mobile_number,
-            # "is_active": user.is_active,
             "is_enterprises": user.is_enterprises,
             "account": user.account,
             "hb_type": user.hb_type,
@@ -286,9 +385,9 @@ def get_filtered_users(request):
             "address": user.address,
             "abonplata": user.abonplata,
             "dogowors": dogowors_list,
+            "services": services,
         })
 
-    # Возвращаем ответ с пагинацией
     return JsonResponse({
         "results": results,
         "pagination": {
@@ -298,7 +397,7 @@ def get_filtered_users(request):
             "total_pages": paginator.num_pages,
             "has_next": paginated_qs.has_next(),
             "has_previous": paginated_qs.has_previous(),
-        }
+        },
     })
 
 
@@ -336,7 +435,7 @@ def get_user_for_update_telefoniya(request):
         service_dates[str(user_service.service_id)] = {
             "activate_at": user_service.date_connected,  # дата подключения
             "deactivate_at": user_service.date_end if user_service.date_end else None,  # ← ИСПРАВЛЕНО: date_end вместо date_disconnected
-            "comment": user_service.comment
+            "comment": user_service.comment,
         }
 
     # ⭐⭐⭐ ФОРМИРУЕМ ДАННЫЕ ПОЛЬЗОВАТЕЛЯ ⭐⭐⭐
@@ -363,6 +462,7 @@ def get_user_for_update_telefoniya(request):
     dogowor_data = {
         "id": dogowor_obj.id,
         "dogowor": dogowor_obj.dogowor,
+        "login": dogowor_obj.login,
         "balance_type": dogowor_obj.balance_type,
         "activate_at": dogowor_obj.activate_at,
         "deactivate_at": dogowor_obj.deactivate_at,
@@ -370,7 +470,7 @@ def get_user_for_update_telefoniya(request):
         "already_deactivated": True if dogowor_obj.deactivate_at else False
     }
     
-    ic(dogowor_data)
+    # ic(dogowor_data)
     
     return Response({
         "success": True,
@@ -400,4 +500,183 @@ def get_all_services(request):
     })
     
     
+   
+
+@api_view(['GET', 'POST'])
+def export_users(request):
+    export_type = request.GET.get('export_type', 'page')
+    
+    # Получаем параметры фильтрации из GET запроса
+    searchType = request.GET.get('searchType', '')
+    surname = request.GET.get('surname', '')
+    name = request.GET.get('name', '')
+    patronymic = request.GET.get('patronymic', '')
+    is_enterprises = request.GET.get('is_enterprises', '')
+    is_active = request.GET.get('is_active', '')
+    etrap_id = request.GET.get('etrap', '')
+    account = request.GET.get('account', '')
+    hb_type = request.GET.get('hb_type', '')
+    phone = request.GET.get('phone', '')
+    dogowor = request.GET.get('dogowor', '')
+    address = request.GET.get('address', '')
+    services = request.GET.get('services', '')
+    
+    # ic(request.GET)
+
+    # Базовый queryset
+    qs = UserTable.objects.all()
+
+    # Применяем фильтры (такие же как в get_filtered_users)
+    if is_active == 'true':
+        qs = qs.filter(
+            dogowors__activate_at__isnull=False,
+            dogowors__deactivate_at__isnull=True,
+            dogowors__balance_type="telefon"
+        ).distinct()
+    elif is_active == 'false':
+        qs = qs.filter(
+            dogowors__deactivate_at__isnull=False,
+            dogowors__balance_type="telefon"
+        ).distinct()
+
+    if is_enterprises:
+        qs = qs.filter(is_enterprises=(is_enterprises == 'true'))
+
+    if etrap_id:
+        qs = qs.filter(etrap__id=etrap_id)
+
+    if searchType == 'users':
+        if surname:
+            qs = qs.filter(surname__icontains=surname)
+        if name:
+            qs = qs.filter(name__icontains=name)
+        if patronymic:
+            qs = qs.filter(patronymic__icontains=patronymic)
+        if phone:
+            qs = qs.filter(
+                Q(number__icontains=phone) |
+                Q(mobile_number__icontains=phone)
+            )
+        if dogowor:
+            qs = qs.filter(dogowors__dogowor__icontains=dogowor)
+    elif searchType == 'phone':
+        if phone:
+            qs = qs.filter(
+                Q(number__icontains=phone) |
+                Q(mobile_number__icontains=phone)
+            )
+    elif searchType == 'dogowor':
+        if dogowor:
+            qs = qs.filter(dogowors__dogowor__icontains=dogowor)
+    elif searchType == 'address':
+        if address:
+            qs = qs.filter(address__icontains=address)
+
+    if account:
+        qs = qs.filter(account=account)
+    if hb_type:
+        qs = qs.filter(hb_type=hb_type)
+
+    # Обрабатываем разные типы экспорта
+    if export_type == 'selected' and request.method == 'POST':
+        # Для выбранных пользователей
+        user_ids = request.data.get('user_ids', [])
+        qs = qs.filter(id__in=user_ids)
+    elif export_type == 'page':
+        # Для текущей страницы - применяем пагинацию
+        page = int(request.GET.get('page', 1))
+        page_size = int(request.GET.get('page_size', 20))
+        start = (page - 1) * page_size
+        end = start + page_size
+        qs = qs[start:end]
+    # Для 'all' - берем все данные без пагинации
+
+    # Создаем Excel файл
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Users"
+
+    # Заголовки
+    headers = [
+        'ID', 'Номер', 'Фамилия', 'Имя', 'Отчество', 
+        'Сотовый номер', 'Предприятие', 'Тип', 'Счет',
+        'Этрап', 'Адрес', 'Абонплата', 'Договоры', 'Балансы', 'Услуги'
+    ]
+    
+    # Стили для заголовков
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+    header_alignment = Alignment(horizontal="center", vertical="center")
+
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_alignment
+
+    # Данные
+    row_num = 2
+    for user in qs:
+        # Получаем информацию о договорах
+        dogowors_info = []
+        balances_info = []
+        
+        for dogowor in user.dogowors.all():
+            dogowors_info.append(dogowor.dogowor)
+            balance = dogowor.balance.amount if hasattr(dogowor, "balance") else 0
+            balances_info.append(f"{dogowor.dogowor}: {balance}")
+            
+        # Услуги пользователя
+        services_info = []
+        user_services = UserService.objects.filter(user=user, is_active=True)  # только активные услуги
+        for us in user_services:
+            services_info.append(f"{us.service.service} ({us.actual_price})")
+
+        ws.cell(row=row_num, column=1, value=user.id)
+        ws.cell(row=row_num, column=2, value=user.number)
+        ws.cell(row=row_num, column=3, value=user.surname)
+        ws.cell(row=row_num, column=4, value=user.name)
+        ws.cell(row=row_num, column=5, value=user.patronymic)
+        ws.cell(row=row_num, column=6, value=user.mobile_number)
+        ws.cell(row=row_num, column=7, value="Да" if user.is_enterprises else "Нет")
+        ws.cell(row=row_num, column=8, value=user.get_hb_type_display() if user.hb_type else "")
+        ws.cell(row=row_num, column=9, value=user.account)
+        ws.cell(row=row_num, column=10, value=str(user.etrap))
+        ws.cell(row=row_num, column=11, value=user.address)
+        ws.cell(row=row_num, column=12, value=float(user.abonplata) if user.abonplata else 0)
+        ws.cell(row=row_num, column=13, value=", ".join(dogowors_info))
+        ws.cell(row=row_num, column=14, value="; ".join(balances_info))
+        ws.cell(row=row_num, column=15, value=", ".join(services_info))
+        
+        row_num += 1
+
+    # Авто-ширина колонок
+    for column in ws.columns:
+        max_length = 0
+        column_letter = column[0].column_letter
+        for cell in column:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = min(max_length + 2, 50)
+        ws.column_dimensions[column_letter].width = adjusted_width
+
+    # Сохраняем в буфер
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+
+    # Создаем HTTP ответ
+    response = HttpResponse(
+        buffer.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename=users_export.xlsx'
+    
+    return response   
+   
+   
+   
     

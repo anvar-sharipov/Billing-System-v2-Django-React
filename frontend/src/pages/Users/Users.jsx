@@ -18,6 +18,7 @@ const Users = () => {
   const [pageSize, setPageSize] = useState(20);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -55,17 +56,13 @@ const Users = () => {
       setLoading(true);
       try {
         const res = await myAxios.get(`core/get-filtered-users/?${params.toString()}`);
-        // console.log("API Response:", res.data.results);
         setUsers(res.data.results || []);
-        // read pagination info if backend provided it
         if (res.data.pagination) {
           setTotalCount(res.data.pagination.total_count || 0);
           setTotalPages(res.data.pagination.total_pages || 0);
-          // ensure current page & pageSize are in sync
           setCurrentPage(res.data.pagination.current_page || pageParam);
           setPageSize(res.data.pagination.page_size || pageSizeParam);
         } else {
-          // fallback
           setTotalCount((res.data.results || []).length);
           setTotalPages(1);
         }
@@ -89,32 +86,47 @@ const Users = () => {
   const handlePageSizeChange = (newSize) => {
     const params = new URLSearchParams(location.search);
     params.set("page_size", String(newSize));
-    // when changing page size, reset to first page
     params.set("page", "1");
     navigate(`?${params.toString()}`);
   };
+
+  // Handler for sorting
+  const handleSortChange = (sortKey, sortDirection) => {
+    const params = new URLSearchParams(location.search);
+    
+    if (sortKey && sortDirection) {
+      params.set("sort", sortKey);
+      params.set("order", sortDirection);
+    } else {
+      // Remove sort parameters when sorting is cleared
+      params.delete("sort");
+      params.delete("order");
+    }
+    
+    // Reset to first page when sorting
+    params.set("page", "1");
+    navigate(`?${params.toString()}`);
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900/50">
       <div className="px-4 py-8">
         <div>
-          {/* className="max-w-7xl mx-auto" */}
-          {/* Шапка страницы */}
-          <UsersHead selectedRows={selectedRows} totalRows={users.length} etraps={etraps} />
+          <UsersHead selectedRows={selectedRows} totalRows={users.length} etraps={etraps} users={users} />
 
-          {/* Таблица пользователей */}
           <div className="bg-gradient-to-br from-white/10 to-white/5 dark:from-gray-800/50 dark:to-gray-700/30 backdrop-blur-lg rounded-2xl p-6 shadow-2xl border border-white/10 dark:border-gray-600/30 mt-6">
             <UsersTable
               users={users}
               loading={loading}
               selectedRows={selectedRows}
               setSelectedRows={setSelectedRows}
-              // pagination props
               currentPage={currentPage}
               pageSize={pageSize}
               totalCount={totalCount}
               totalPages={totalPages}
               onPageChange={handlePageChange}
               onPageSizeChange={handlePageSizeChange}
+              onSortChange={handleSortChange} // новый проп
             />
           </div>
         </div>

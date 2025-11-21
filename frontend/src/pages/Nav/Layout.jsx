@@ -5,11 +5,13 @@ import LeftBar from "./LeftBar/LeftBar";
 import RightBar from "./RightBar/RightBar";
 import { motion } from "framer-motion";
 
+
 export default function Layout({ theme, toggleTheme }) {
   const containerVariants = {
     hidden: { opacity: 0, scale: 0.95 },
     visible: { opacity: 1, scale: 1, transition: { duration: 0.5, ease: "easeOut" } },
   };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900 flex">
@@ -35,6 +37,7 @@ export default function Layout({ theme, toggleTheme }) {
 
       {/* Right Sidebar */}
       <RightBar />
+      
     </div>
   );
 }
